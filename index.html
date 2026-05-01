@@ -3,87 +3,336 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kwik Ads Dashboard — April 2026</title>
+<title>Kwik Ads — April Go-Live Report</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F2F5;color:#1a1a1a;font-size:13px}
 .header{background:linear-gradient(135deg,#0D1B2E 0%,#1a3a5c 100%);padding:20px 32px;display:flex;justify-content:space-between;align-items:center}
-.header-logo img{height:36px}
-.header-right{text-align:right}
-.header-right h1{font-size:18px;font-weight:500;color:#fff;margin-bottom:3px}
-.header-right p{font-size:12px;color:rgba(255,255,255,0.55)}
-.header-badges{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.header-left h1{font-size:18px;font-weight:500;color:#fff;margin-bottom:3px}
+.header-left p{font-size:12px;color:rgba(255,255,255,0.55)}
+.header-right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
 .badge-gold{background:#F5A623;color:#0D1B2E}
 .badge-outline{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);border:0.5px solid rgba(255,255,255,0.2)}
-.page{padding:24px 32px;max-width:1020px;margin:0 auto}
-.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;margin:0 0 12px}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px}
-.card{background:#fff;border-radius:10px;padding:14px 16px;border:0.5px solid #E5E7EB;position:relative;overflow:hidden}
+.logo-text{font-size:20px;font-weight:700;color:#fff}<span style="color:#F5A623">Go</span>Kwik
+.page{padding:24px 32px;max-width:1100px;margin:0 auto}
+
+/* Summary cards */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px}
+.card{background:#fff;border-radius:10px;padding:12px 16px;border:0.5px solid #E5E7EB;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.card.c-blue::before{background:#1E5FA8}
-.card.c-green::before{background:#0F6E56}
-.card.c-red::before{background:#DC2626}
-.card.c-gold::before{background:#F5A623}
-.card.c-navy::before{background:#0D1B2E}
-.card.c-teal::before{background:#0891B2}
-.card-lbl{font-size:11px;color:#6B7280;margin-bottom:6px;font-weight:500}
-.card-val{font-size:24px;font-weight:600;color:#0D1B2E}
-.card-sub{font-size:11px;color:#9CA3AF;margin-top:4px}
-.good{color:#0F6E56}.bad{color:#DC2626}.warn{color:#D97706}
-.divider{height:1px;background:#E5E7EB;margin:24px 0}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
-.panel{background:#fff;border-radius:12px;border:0.5px solid #E5E7EB;padding:16px 18px}
-.panel-title{font-size:12px;font-weight:600;color:#0D1B2E;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.panel-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.row-lbl{font-size:12px;color:#374151;min-width:145px}
-.bar-bg{flex:1;background:#F3F4F6;border-radius:4px;height:26px;overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 10px;transition:width .3s ease}
-.bar-fill span{font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
-.row-num{font-size:13px;font-weight:600;min-width:30px;text-align:right}
-.row-pct{font-size:11px;color:#9CA3AF;min-width:34px;text-align:right}
-.arrow{text-align:center;color:#D1D5DB;font-size:16px;margin:3px 0 3px 153px}
-.brand-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #F3F4F6}
-.brand-row:last-of-type{border-bottom:none}
-.brand-name{font-size:12px;color:#0D1B2E;font-weight:500}
-.brand-owner{font-size:11px;color:#9CA3AF;margin-top:1px}
-.brand-earr{font-size:12px;font-weight:600;color:#0F6E56}
-.brand-earr.est{color:#D97706}
-.total-row{margin-top:10px;padding-top:10px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center}
-.total-lbl{font-size:12px;font-weight:600;color:#6B7280}
-.total-val{font-size:14px;font-weight:700;color:#0F6E56}
-.source-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #F3F4F6}
-.source-row:last-child{border-bottom:none}
-.source-lbl{font-size:12px;color:#374151;display:flex;align-items:center;gap:8px}
-.sdot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.source-val{font-size:13px;font-weight:600;color:#0D1B2E}
-.owner-card{background:#fff;border-radius:12px;border:0.5px solid #E5E7EB;padding:16px;text-align:center}
-.owner-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin:0 auto 8px}
-.owner-name{font-size:12px;color:#6B7280;margin-bottom:10py}
-.owner-brands{font-size:28px;font-weight:700;color:#0D1B2E;line-height:1}
-.owner-label{font-size:11px;color:#9CA3AF;margin:2px 0 8px}
-.owner-earr{font-size:13px;font-weight:600;color:#0F6E56}
-.alert{background:#FEF3C7;border:0.5px solid #F5A623;border-left:3px solid #F5A623;border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:12px;color:#92400E;display:flex;gap:8px;align-items:flex-start}
-.stat-highlight{background:linear-gradient(135deg,#0D1B2E,#1a3a5c);border-radius:12px;padding:16px 20px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.stat-hl-left h3{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:4px;font-weight:400}
-.stat-hl-left p{font-size:26px;font-weight:700;color:#F5A623}
-.stat-hl-right{text-align:right}
-.stat-hl-right h3{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:4px;font-weight:400}
-.stat-hl-right p{font-size:26px;font-weight:700;color:#4ADE80}
+.card.green::before{background:#0F6E56}
+.card.gold::before{background:#F5A623}
+.card.blue::before{background:#1E5FA8}
+.card.navy::before{background:#0D1B2E}
+.card.red::before{background:#DC2626}
+.card-lbl{font-size:11px;color:#6B7280;margin-bottom:5px;font-weight:500}
+.card-val{font-size:22px;font-weight:600;color:#0D1B2E}
+.card-sub{font-size:11px;color:#9CA3AF;margin-top:3px}
+
+/* Table */
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;margin:0 0 12px}
+.table-wrap{background:#fff;border-radius:12px;border:0.5px solid #E5E7EB;overflow:hidden;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead tr{background:#0D1B2E}
+thead th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+tbody tr{border-bottom:0.5px solid #F3F4F6;transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#FAFAFA}
+tbody td{padding:10px 14px;font-size:12px;color:#374151;vertical-align:middle}
+.brand-name{font-weight:600;color:#0D1B2E}
+.owner-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;margin-top:2px}
+.tag-rahul{background:#E6F1FB;color:#0C447C}
+.tag-gaurav{background:#EEEDFE;color:#3C3489}
+.tag-vaishak{background:#FEF3C7;color:#92400E}
+.earr{font-weight:600;color:#0F6E56}
+.earr.est{color:#D97706}
+.date-cell{white-space:nowrap}
+.date-apr{color:#0F6E56;font-weight:500}
+.date-may{color:#D97706;font-weight:500}
+.date-na{color:#9CA3AF;font-style:italic}
+.total-row td{background:#F9FAFB;font-weight:700;color:#0D1B2E;font-size:13px}
+.note{font-size:11px;color:#D97706}
+
+/* Owner summary */
+.owner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.owner-card{background:#fff;border-radius:10px;border:0.5px solid #E5E7EB;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.owner-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.owner-info{flex:1}
+.owner-name{font-size:13px;font-weight:600;color:#0D1B2E;margin-bottom:2px}
+.owner-brands{font-size:11px;color:#6B7280}
+.owner-earr{font-size:14px;font-weight:700;color:#0F6E56;margin-top:4px}
+.owner-earr.est{color:#D97706}
+
 .footer{background:#0D1B2E;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 .footer-left{font-size:11px;color:rgba(255,255,255,0.45)}
 .footer-right{font-size:11px;color:rgba(255,255,255,0.3)}
-@media(max-width:700px){
-  .cards{grid-template-columns:repeat(3,1fr)}
-  .two-col,.three-col{grid-template-columns:1fr}
-  .page{padding:16px}
-  .header{padding:16px}
-}
+.alert{background:#FEF3C7;border-left:3px solid #F5A623;border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:12px;color:#92400E;display:flex;gap:8px}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <img src="data:image/png;base64,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" style="height:36px" alt="GoKwik">
+  <div class="header-left">
+    <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:6px"><span style="color:#F5A623">Go</span>Kwik</div>
+    <h1>Kwik Ads — April Go-Live Report</h1>
+    <p>Rahul Patel · rahul.patel@gokwik.co · 7337668906</p>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-gold">April 2026</span>
+    <span class="badge badge-outline">14 Brands Live</span>
+    <span class="badge badge-outline">₹76,91,600 EARR</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card green">
+      <div class="card-lbl">Total Go-Live</div>
+      <div class="card-val" style="color:#0F6E56">14</div>
+      <div class="card-sub">April 2026</div>
+    </div>
+    <div class="card blue">
+      <div class="card-lbl">Rahul Patel</div>
+      <div class="card-val">9</div>
+      <div class="card-sub">₹51,57,600</div>
+    </div>
+    <div class="card navy">
+      <div class="card-lbl">Gaurav Panchal</div>
+      <div class="card-val">1</div>
+      <div class="card-sub">₹5,34,000</div>
+    </div>
+    <div class="card gold">
+      <div class="card-lbl">Vaishak</div>
+      <div class="card-val" style="color:#D97706">4</div>
+      <div class="card-sub">₹20,00,000 (est.)</div>
+    </div>
+    <div class="card green">
+      <div class="card-lbl">Total EARR</div>
+      <div class="card-val" style="color:#0F6E56;font-size:17px">₹76.91L</div>
+      <div class="card-sub">April 2026</div>
+    </div>
+  </div>
+
+  <div class="alert">
+    <span>⚠️</span>
+    <span><strong>SF update needed:</strong> Aroma, Misbaha, Finishia and Edition II (Vaishak) are not in Salesforce. Audit done dates for these brands and for Sinderella, Vooki, Layer Story, Safe Bee, Alfis Beauty, Cosmecell are not updated in SF — showing month only from tracker.</span>
+  </div>
+
+  <!-- Owner Summary -->
+  <div class="section-label">Owner Summary</div>
+  <div class="owner-grid">
+    <div class="owner-card">
+      <div class="owner-avatar" style="background:#E6F1FB;color:#0C447C">RP</div>
+      <div class="owner-info">
+        <div class="owner-name">Rahul Patel</div>
+        <div class="owner-brands">9 brands · April Go-Live</div>
+        <div class="owner-earr">₹51,57,600</div>
+      </div>
+    </div>
+    <div class="owner-card">
+      <div class="owner-avatar" style="background:#FEF3C7;color:#92400E">VS</div>
+      <div class="owner-info">
+        <div class="owner-name">Vaishak</div>
+        <div class="owner-brands">4 brands · not in SF</div>
+        <div class="owner-earr est">₹20,00,000 (est.)</div>
+      </div>
+    </div>
+    <div class="owner-card">
+      <div class="owner-avatar" style="background:#EEEDFE;color:#3C3489">GP</div>
+      <div class="owner-info">
+        <div class="owner-name">Gaurav Panchal</div>
+        <div class="owner-brands">1 brand · April Go-Live</div>
+        <div class="owner-earr">₹5,34,000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Table -->
+  <div class="section-label">Brand-wise detail — April Go-Live</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Brand</th>
+          <th>Owner</th>
+          <th>Audit Done Date</th>
+          <th>Go-Live Date</th>
+          <th>EARR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td class="brand-name">Pattuvaa</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="date-cell"><span class="date-apr">27 Apr 2026</span></td>
+          <td class="earr">₹12,00,000</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td class="brand-name">Safe Bee</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="date-cell"><span class="date-apr">20 Apr 2026</span></td>
+          <td class="earr">₹6,00,000</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td class="brand-name">Alfis Beauty</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">12 Apr 2026</span></td>
+          <td class="earr">₹5,52,000</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td class="brand-name">The Treddyy</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-apr">21 Apr 2026</span></td>
+          <td class="date-cell"><span class="date-apr">27 Apr 2026</span></td>
+          <td class="earr">₹5,28,000</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td class="brand-name">Cosmecell</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">20 Apr 2026</span></td>
+          <td class="earr">₹5,28,000</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td class="brand-name">The Orikai</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-apr">21 Apr 2026</span></td>
+          <td class="date-cell"><span class="date-apr">29 Apr 2026</span></td>
+          <td class="earr">₹4,80,000</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td class="brand-name">Layer Story</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">12 Apr 2026</span></td>
+          <td class="earr">₹4,29,600</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td class="brand-name">Sinderella</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">20 Apr 2026</span></td>
+          <td class="earr">₹4,20,000</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td class="brand-name">Vooki</td>
+          <td><span class="owner-tag tag-rahul">Rahul</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">12 Apr 2026</span></td>
+          <td class="earr">₹4,20,000</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td class="brand-name">Offnorth</td>
+          <td><span class="owner-tag tag-gaurav">Gaurav</span></td>
+          <td class="date-cell"><span class="date-apr">24 Apr 2026</span></td>
+          <td class="date-cell"><span class="date-apr">29 Apr 2026</span></td>
+          <td class="earr">₹5,34,000</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td class="brand-name">Aroma</td>
+          <td><span class="owner-tag tag-vaishak">Vaishak</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="earr est">₹5,00,000 *</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td class="brand-name">Misbaha</td>
+          <td><span class="owner-tag tag-vaishak">Vaishak</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="earr est">₹5,00,000 *</td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td class="brand-name">Finishia</td>
+          <td><span class="owner-tag tag-vaishak">Vaishak</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="earr est">₹5,00,000 *</td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td class="brand-name">Edition II</td>
+          <td><span class="owner-tag tag-vaishak">Vaishak</span></td>
+          <td class="date-cell"><span class="date-may">May 2026</span></td>
+          <td class="date-cell"><span class="date-apr">Apr 2026</span></td>
+          <td class="earr est">₹5,00,000 *</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="5" style="text-align:right;padding-right:16px">Total April EARR</td>
+          <td>₹76,91,600</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="font-size:11px;color:#9CA3AF;margin-top:-12px;margin-bottom:20px">* Estimated EARR — not in Salesforce · — Days to close not calculable (exact audit date not in SF)</div>
+
+  <!-- Audit vs Go-Live Summary -->
+  <div class="section-label">Audit done month vs Go-Live — April 2026</div>
+  <div class="table-wrap" style="margin-bottom:8px">
+    <table>
+      <thead>
+        <tr>
+          <th>Audit Done Month</th>
+          <th>Brands</th>
+          <th>Brand Names</th>
+          <th>Go-Live Month</th>
+          <th>EARR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span style="background:#EAF3DE;color:#27500A;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600">April 2026</span></td>
+          <td style="font-size:18px;font-weight:700;color:#0F6E56">5</td>
+          <td style="font-size:12px;color:#374151">The Treddyy, The Orikai, Offnorth, Safe Bee, Pattuvaa</td>
+          <td><span class="date-apr">April 2026</span></td>
+          <td class="earr">₹34,42,000</td>
+        </tr>
+        <tr>
+          <td><span style="background:#FEF3C7;color:#92400E;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600">May 2026</span></td>
+          <td style="font-size:18px;font-weight:700;color:#D97706">9</td>
+          <td style="font-size:12px;color:#374151">Sinderella, Vooki, Layer Story, Alfis Beauty, Cosmecell, Aroma, Misbaha, Finishia, Edition II</td>
+          <td><span class="date-apr">April 2026</span></td>
+          <td class="earr est">₹42,49,600</td>
+        </tr>
+        <tr class="total-row">
+          <td>Total</td>
+          <td style="font-size:18px;color:#0D1B2E">14</td>
+          <td></td>
+          <td>April 2026</td>
+          <td>₹76,91,600</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:11px;color:#9CA3AF;margin-bottom:20px">⚠️ 9 out of 14 brands have audit dates logged in May — these brands likely went live before the audit call was updated in Salesforce. SF needs to be updated with correct audit dates.</div>
+
+</div>
+
+<div class="footer">
+  <span class="footer-left">GoKwik · Kwik Ads · April 2026 · rahul.patel@gokwik.co</span>
+  <span class="footer-right">Powered by GoKwik Intelligence</span>
+</div>
+
+</body>
+</html>
