@@ -2,8 +2,9 @@
 """
 sync_dashboard.py
 Pulls live KwikAds data from Salesforce (filtered to Rahul's team only) and
-regenerates index.html for the GitHub Pages dashboard, organized by quarter
-with JAS as the focused/default view. Runs on a schedule via GitHub Actions.
+regenerates index.html for the GitHub Pages dashboard: JAS quarter focus,
+Target vs Achievement (8 Cr goal), monthly audit/pitch counts, conversion
+rate, and MQL lead funnel breakdown. Runs on a schedule via GitHub Actions.
 
 Required environment variables (GitHub Secrets):
   SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN
@@ -11,11 +12,11 @@ Required environment variables (GitHub Secrets):
 
 import os
 import sys
+import json
 from datetime import datetime, date
 from collections import defaultdict
 from simple_salesforce import Salesforce
 
-# ---- TEAM FILTER: only these owners are ever included ----
 TEAM_OWNERS = {
     "Rahul Patel": "Rahul",
     "gaurav1 Panchal": "Gaurav",
@@ -32,6 +33,7 @@ QUARTER_MONTHS = {
 }
 FOCUS_QUARTER = "JAS"
 FOCUS_YEAR = 2026
+JAS_TARGET = 8_00_00_000  # Rs 8 Cr
 
 
 def sf_connect():
@@ -80,10 +82,26 @@ def which_quarter(close_date_str):
     return None, None
 
 
+def bucket_lead_status(status, is_converted):
+    if is_converted:
+        return "Converted"
+    if not status:
+        return "Open"
+    s = status.lower()
+    if "unqualified" in s:
+        return "Unqualified"
+    if "could not connect" in s or "no connect" in s or "not reachable" in s:
+        return "Could Not Connect"
+    if "contact" in s or "pitch" in s:
+        return "Contacted"
+    return "Open"
+
+
 def build_dashboard():
     sf = sf_connect()
     owner_names_sql = "','".join(sorted(set(TEAM_OWNERS.keys())))
 
+    # ---- ALL-TIME GO-LIVE (Till Date), team only ----
     golive_q = f"""
         SELECT Account.Name, Owner.Name, CloseDate, Kwik_Ads_Expected_ARR__c
         FROM Opportunity
@@ -101,8 +119,7 @@ def build_dashboard():
 
     for r in golive_records:
         acct = r["Account"]["Name"] if r.get("Account") else "Unknown"
-        owner_full = r["Owner"]["Name"] if r.get("Owner") else None
-        owner = owner_short(owner_full)
+        owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
         if owner is None:
             continue
         arr = r.get("Kwik_Ads_Expected_ARR__c") or 0
@@ -130,6 +147,7 @@ def build_dashboard():
         focus_month_buckets[month]["rows"].append((acct, owner, close_date, arr))
         focus_month_buckets[month]["total"] += arr
 
+    # ---- ACTIVE PIPELINE (Pre Audit + Audit Done), team only ----
     pipeline_q = f"""
         SELECT Owner.Name, StageName, Kwik_Ads_Expected_ARR__c
         FROM Opportunity
@@ -153,19 +171,55 @@ def build_dashboard():
 
     today = date.today()
     month_start = today.replace(day=1).isoformat()
+
+    # ---- PITCHES THIS MONTH: opportunities created this month that reached Pitch or beyond ----
+    pitch_q = f"""
+        SELECT Id
+        FROM Opportunity
+        WHERE RecordType.Name = 'Kwik Ads'
+          AND Owner.Name IN ('{owner_names_sql}')
+          AND CreatedDate >= {month_start}T00:00:00Z
+          AND StageName != 'Prospecting'
+    """
+    pitches_this_month = len(query_all(sf, pitch_q))
+
+    # ---- AUDITS THIS MONTH: opportunities created this month that reached Audit Done or beyond ----
+    audit_q = f"""
+        SELECT Id
+        FROM Opportunity
+        WHERE RecordType.Name = 'Kwik Ads'
+          AND Owner.Name IN ('{owner_names_sql}')
+          AND CreatedDate >= {month_start}T00:00:00Z
+          AND StageName IN ('Audit Done', 'Agreement Signed', 'Go-Live')
+    """
+    audits_this_month = len(query_all(sf, audit_q))
+
+    golives_this_month = sum(1 for _, _, cd, _ in till_date_rows if cd and cd >= month_start)
+    conversion_rate = (golives_this_month / audits_this_month * 100) if audits_this_month else 0
+
+    # ---- MQL LEAD FUNNEL (this month), team only ----
     lead_q = f"""
-        SELECT Id, LeadSource, Status, IsConverted, Owner.Name, CreatedDate
+        SELECT Id, Status, IsConverted
         FROM Lead
         WHERE CreatedDate >= {month_start}T00:00:00Z
           AND Owner.Name IN ('{owner_names_sql}')
     """
     lead_records = query_all(sf, lead_q)
+    lead_buckets = defaultdict(int)
+    for r in lead_records:
+        b = bucket_lead_status(r.get("Status"), r.get("IsConverted"))
+        lead_buckets[b] += 1
     total_leads = len(lead_records)
-    unqualified = sum(1 for r in lead_records if r.get("Status") == "Unqualified")
-    converted = sum(1 for r in lead_records if r.get("IsConverted"))
 
     generated_at = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
 
+    # Chart.js is embedded inline (not loaded from a CDN) so the dashboard
+    # never depends on an external script load succeeding at view-time.
+    chartjs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chartjs.min.js")
+    with open(chartjs_path, "r", encoding="utf-8") as f:
+        chartjs_source = f.read()
+
+    # ---------------- HTML RENDER HELPERS ----------------
     def render_brand_rows(rows):
         html = ""
         for acct, owner, close_date, arr in rows:
@@ -219,38 +273,56 @@ def build_dashboard():
         other_quarters_html += f"<h2>{q} {y} — {len(data['rows'])} Brands · {fmt_currency(data['total'])}</h2>"
         other_quarters_html += render_owner_table(data["owner_totals"], len(data["rows"]), data["total"])
 
+    # ---- Chart data (JS-side Chart.js) ----
+    owner_labels = [o for o, _ in sorted(focus_data["owner_totals"].items(), key=lambda x: -x[1][1])] if focus_data["owner_totals"] else []
+    owner_values = [focus_data["owner_totals"][o][1] for o in owner_labels]
+
+    lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
+    lead_values = [lead_buckets.get(l, 0) for l in lead_labels]
+
+    target_progress_pct = round(min(focus_data["total"] / JAS_TARGET * 100, 100), 1) if JAS_TARGET else 0
+
+    chart_data_json = json.dumps({
+        "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
+        "byOwner": {"labels": owner_labels, "values": owner_values},
+        "leadFunnel": {"labels": lead_labels, "values": lead_values},
+    })
+
     html_out = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kwik Ads Dashboard — Live from Salesforce</title>
+<script>
+{chartjs_source}
+</script>
 <style>
-  :root {{ --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F7F8FC; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; }}
+  :root {{ --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F7F8FC; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; --green:#1F7A1F; --red:#B33A3A; }}
   * {{ box-sizing: border-box; }}
   body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Calibri,sans-serif; background:var(--bg); color:var(--slate); }}
-  header {{ background:var(--navy); color:white; padding:24px 32px; }}
+  header {{ background:linear-gradient(135deg, var(--navy) 0%, #263480 100%); color:white; padding:26px 32px; }}
   header .brand {{ font-size:13px; letter-spacing:2px; color:var(--gold); font-weight:700; text-transform:uppercase; }}
-  header h1 {{ font-family:Georgia,serif; font-size:26px; margin:6px 0; }}
+  header h1 {{ font-family:Georgia,serif; font-size:27px; margin:6px 0; }}
   header .meta {{ font-size:13px; color:var(--ice); }}
   nav {{ display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; }}
   nav button {{ background:none; border:none; color:var(--ice); padding:14px 16px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; }}
   nav button.active {{ color:white; border-bottom-color:var(--gold); }}
-  main {{ padding:26px 32px; max-width:1150px; margin:0 auto; }}
+  main {{ padding:26px 32px; max-width:1180px; margin:0 auto; }}
   .tab-content {{ display:none; }}
   .tab-content.active {{ display:block; }}
   h2 {{ font-family:Georgia,serif; color:var(--navy); font-size:19px; margin:22px 0 12px; }}
   .stat-row {{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }}
-  .stat-card {{ background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:14px 18px; flex:1; min-width:130px; }}
+  .stat-card {{ background:white; border-radius:10px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:14px 18px; flex:1; min-width:125px; }}
   .stat-card .num {{ font-size:22px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }}
   .stat-card .label {{ font-size:11.5px; color:#8891A3; margin-top:3px; }}
   .owner-row {{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }}
-  .owner-card {{ background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:12px 16px; flex:1; min-width:140px; }}
+  .owner-card {{ background:white; border-radius:10px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:12px 16px; flex:1; min-width:140px; }}
   .owner-card .initials {{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--navy); color:white; font-size:10.5px; font-weight:700; margin-bottom:5px; }}
   .owner-card .name {{ font-weight:700; color:var(--navy); font-size:12.5px; }}
   .owner-card .count {{ font-size:11.5px; color:var(--slate); margin:3px 0; }}
   .owner-card .arr {{ font-size:13px; font-weight:700; color:var(--gold); }}
-  table {{ width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(30,39,97,0.06); font-size:12.5px; margin-bottom:18px; }}
+  table {{ width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(30,39,97,0.07); font-size:12.5px; margin-bottom:18px; }}
   th {{ background:var(--navy); color:white; text-align:left; padding:8px 12px; font-size:11.5px; }}
   td {{ padding:7px 12px; border-bottom:1px solid var(--border); }}
   tr.total-row td {{ font-weight:700; background:var(--ice); color:var(--navy); }}
@@ -259,6 +331,15 @@ def build_dashboard():
   .empty-state {{ background:white; border-radius:10px; padding:28px; text-align:center; color:#8891A3; margin-bottom:18px; }}
   .empty-state .icon {{ font-size:28px; margin-bottom:6px; }}
   .badge {{ display:inline-block; background:var(--gold); color:white; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; margin-left:8px; }}
+  .chart-card {{ background:white; border-radius:12px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:18px 20px; margin-bottom:20px; }}
+  .chart-row {{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }}
+  @media (max-width:800px) {{ .chart-row {{ grid-template-columns:1fr; }} }}
+  .progress-wrap {{ background:#EDEFF5; border-radius:20px; height:26px; overflow:hidden; margin:10px 0; position:relative; }}
+  .progress-fill {{ background:linear-gradient(90deg, var(--gold), #E0A84A); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:white; font-size:11.5px; font-weight:700; transition:width 0.6s ease; }}
+  .target-summary {{ display:flex; gap:20px; flex-wrap:wrap; margin-top:12px; }}
+  .target-summary div {{ flex:1; min-width:120px; }}
+  .target-summary .big {{ font-size:20px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }}
+  .target-summary .lbl {{ font-size:11px; color:#8891A3; }}
   footer {{ text-align:center; padding:20px; font-size:11.5px; color:#8891A3; }}
 </style>
 </head>
@@ -278,11 +359,38 @@ def build_dashboard():
 <main>
 
   <div class="tab-content active" id="jas">
-    <h2>JAS {FOCUS_YEAR} — Total Go-Live (Team Only)</h2>
+
+    <div class="chart-card">
+      <h2 style="margin-top:0">🎯 JAS {FOCUS_YEAR} — Target vs Achievement</h2>
+      <div class="progress-wrap">
+        <div class="progress-fill" style="width:{target_progress_pct}%">{target_progress_pct}%</div>
+      </div>
+      <div class="target-summary">
+        <div><div class="big">{fmt_currency(JAS_TARGET)}</div><div class="lbl">Target (JAS)</div></div>
+        <div><div class="big" style="color:var(--gold)">{fmt_currency(focus_data['total'])}</div><div class="lbl">Achieved So Far</div></div>
+        <div><div class="big" style="color:var(--red)">{fmt_currency(max(JAS_TARGET - focus_data['total'], 0))}</div><div class="lbl">Gap Remaining</div></div>
+      </div>
+      <canvas id="targetChart" height="90"></canvas>
+    </div>
+
     <div class="stat-row">
       <div class="stat-card"><div class="num">{len(focus_data['rows'])}</div><div class="label">Total Go-Live (JAS)</div></div>
-      <div class="stat-card"><div class="num">{fmt_currency(focus_data['total'])}</div><div class="label">Total EARR (JAS)</div></div>
+      <div class="stat-card"><div class="num">{pitches_this_month}</div><div class="label">Pitches ({today.strftime('%B')})</div></div>
+      <div class="stat-card"><div class="num">{audits_this_month}</div><div class="label">Audits ({today.strftime('%B')})</div></div>
+      <div class="stat-card"><div class="num">{conversion_rate:.1f}%</div><div class="label">Audit → Go-Live Conv. ({today.strftime('%B')})</div></div>
     </div>
+
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2 style="margin-top:0">Achievement by Owner</h2>
+        <canvas id="ownerChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2 style="margin-top:0">MQL Lead Funnel — {today.strftime('%B')}</h2>
+        <canvas id="leadChart"></canvas>
+      </div>
+    </div>
+
     <div class="owner-row">
       {render_owner_cards(focus_data['owner_totals'])}
     </div>
@@ -324,9 +432,17 @@ def build_dashboard():
     <h2>MQL Lead Funnel — {today.strftime('%B %Y')} MTD (Team Only)</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="num">{total_leads}</div><div class="label">Total Leads</div></div>
-      <div class="stat-card"><div class="num">{converted}</div><div class="label">Converted</div></div>
-      <div class="stat-card"><div class="num">{unqualified}</div><div class="label">Unqualified</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Unqualified', 0)}</div><div class="label">Unqualified</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Open', 0)}</div><div class="label">Open</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Contacted', 0)}</div><div class="label">Contacted</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Could Not Connect', 0)}</div><div class="label">Could Not Connect</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Converted', 0)}</div><div class="label">Converted</div></div>
     </div>
+    <div class="chart-card">
+      <h2 style="margin-top:0">Lead Status Breakdown</h2>
+      <canvas id="leadChart2"></canvas>
+    </div>
+    <p style="font-size:11.5px;color:#8891A3;font-style:italic;">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off.</p>
   </div>
 
 </main>
@@ -340,6 +456,39 @@ def build_dashboard():
       document.getElementById(btn.dataset.tab).classList.add('active');
     }});
   }});
+
+  const CHART_DATA = {chart_data_json};
+  const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A';
+
+  new Chart(document.getElementById('targetChart'), {{
+    type: 'bar',
+    data: {{
+      labels: CHART_DATA.targetVsAchieved.labels,
+      datasets: [{{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD], borderRadius: 6 }}]
+    }},
+    options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
+  }});
+
+  new Chart(document.getElementById('ownerChart'), {{
+    type: 'bar',
+    data: {{
+      labels: CHART_DATA.byOwner.labels,
+      datasets: [{{ label: 'EARR', data: CHART_DATA.byOwner.values, backgroundColor: NAVY, borderRadius: 6 }}]
+    }},
+    options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
+  }});
+
+  const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
+  new Chart(document.getElementById('leadChart'), {{
+    type: 'doughnut',
+    data: {{ labels: CHART_DATA.leadFunnel.labels, datasets: [{{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors }}] }},
+    options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }} }} }}
+  }});
+  new Chart(document.getElementById('leadChart2'), {{
+    type: 'bar',
+    data: {{ labels: CHART_DATA.leadFunnel.labels, datasets: [{{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderRadius: 6 }}] }},
+    options: {{ plugins: {{ legend: {{ display: false }} }} }}
+  }});
 </script>
 </body>
 </html>
@@ -350,8 +499,9 @@ def build_dashboard():
 
     print(f"Dashboard regenerated at {generated_at}")
     print(f"Till Date (team only): {len(till_date_rows)} brands, {fmt_currency(total_earr_alltime)}")
-    print(f"JAS {FOCUS_YEAR} focus: {len(focus_data['rows'])} brands, {fmt_currency(focus_data['total'])}")
-    print(f"Team filter applied: {sorted(set(TEAM_OWNERS.values()))}")
+    print(f"JAS {FOCUS_YEAR} focus: {len(focus_data['rows'])} brands, {fmt_currency(focus_data['total'])} ({target_progress_pct}% of {fmt_currency(JAS_TARGET)} target)")
+    print(f"Pitches this month: {pitches_this_month}, Audits this month: {audits_this_month}, Conversion: {conversion_rate:.1f}%")
+    print(f"Lead buckets: {dict(lead_buckets)}")
 
 
 if __name__ == "__main__":
