@@ -22,48 +22,59 @@
 
 </script>
 <style>
-  :root { --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F7F8FC; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; --green:#1F7A1F; --red:#B33A3A; }
+  :root { --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F0F2FA; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; --green:#1F7A1F; --red:#B33A3A; --purple:#6C4FB6; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Calibri,sans-serif; background:var(--bg); color:var(--slate); }
-  header { background:linear-gradient(135deg, var(--navy) 0%, #263480 100%); color:white; padding:26px 32px; }
-  header .brand { font-size:13px; letter-spacing:2px; color:var(--gold); font-weight:700; text-transform:uppercase; }
-  header h1 { font-family:Georgia,serif; font-size:27px; margin:6px 0; }
+  header { background:linear-gradient(135deg, var(--navy) 0%, #2E3A94 50%, #3D2E7C 100%); color:white; padding:28px 32px; box-shadow:0 4px 20px rgba(30,39,97,0.25); }
+  header .brand { font-size:13px; letter-spacing:3px; color:var(--gold); font-weight:700; text-transform:uppercase; }
+  header h1 { font-family:Georgia,serif; font-size:28px; margin:6px 0; }
   header .meta { font-size:13px; color:var(--ice); }
-  nav { display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; }
-  nav button { background:none; border:none; color:var(--ice); padding:14px 16px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; }
+  nav { display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+  nav button { background:none; border:none; color:var(--ice); padding:15px 18px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; transition:all 0.2s; }
+  nav button:hover { color:white; background:rgba(255,255,255,0.06); }
   nav button.active { color:white; border-bottom-color:var(--gold); }
-  main { padding:26px 32px; max-width:1180px; margin:0 auto; }
+  main { padding:26px 32px; max-width:1200px; margin:0 auto; }
   .tab-content { display:none; }
-  .tab-content.active { display:block; }
-  h2 { font-family:Georgia,serif; color:var(--navy); font-size:19px; margin:22px 0 12px; }
+  .tab-content.active { display:block; animation:fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  h2 { font-family:Georgia,serif; color:var(--navy); font-size:19px; margin:22px 0 12px; display:flex; align-items:center; gap:8px; }
   .stat-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
-  .stat-card { background:white; border-radius:10px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:14px 18px; flex:1; min-width:125px; }
-  .stat-card .num { font-size:22px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
+  .stat-card { background:white; border-radius:12px; box-shadow:0 3px 12px rgba(30,39,97,0.09); padding:15px 18px; flex:1; min-width:130px; border-left:4px solid var(--navy); transition:transform 0.2s; }
+  .stat-card:hover { transform:translateY(-2px); }
+  .stat-card.money { border-left-color:var(--gold); }
+  .stat-card.green { border-left-color:var(--green); }
+  .stat-card.red { border-left-color:var(--red); }
+  .stat-card.purple { border-left-color:var(--purple); }
+  .stat-card .icon-tag { font-size:15px; margin-bottom:2px; }
+  .stat-card .num { font-size:23px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
   .stat-card .label { font-size:11.5px; color:#8891A3; margin-top:3px; }
   .owner-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
-  .owner-card { background:white; border-radius:10px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:12px 16px; flex:1; min-width:140px; }
-  .owner-card .initials { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--navy); color:white; font-size:10.5px; font-weight:700; margin-bottom:5px; }
+  .owner-card { background:white; border-radius:12px; box-shadow:0 3px 12px rgba(30,39,97,0.09); padding:13px 17px; flex:1; min-width:150px; }
+  .owner-card .initials { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--navy),var(--purple)); color:white; font-size:11px; font-weight:700; margin-bottom:6px; }
   .owner-card .name { font-weight:700; color:var(--navy); font-size:12.5px; }
   .owner-card .count { font-size:11.5px; color:var(--slate); margin:3px 0; }
-  .owner-card .arr { font-size:13px; font-weight:700; color:var(--gold); }
-  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(30,39,97,0.07); font-size:12.5px; margin-bottom:18px; }
-  th { background:var(--navy); color:white; text-align:left; padding:8px 12px; font-size:11.5px; }
+  .owner-card .arr { font-size:14px; font-weight:700; color:var(--gold); }
+  .owner-card .avg { font-size:10.5px; color:#8891A3; margin-top:2px; }
+  table { width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden; box-shadow:0 3px 12px rgba(30,39,97,0.07); font-size:12.5px; margin-bottom:18px; }
+  th { background:linear-gradient(90deg,var(--navy),#2E3A94); color:white; text-align:left; padding:9px 12px; font-size:11.5px; }
   td { padding:7px 12px; border-bottom:1px solid var(--border); }
   tr.total-row td { font-weight:700; background:var(--ice); color:var(--navy); }
   .num-cell { text-align:right; }
   .center-cell { text-align:center; }
-  .empty-state { background:white; border-radius:10px; padding:28px; text-align:center; color:#8891A3; margin-bottom:18px; }
+  .empty-state { background:white; border-radius:12px; padding:28px; text-align:center; color:#8891A3; margin-bottom:18px; }
   .empty-state .icon { font-size:28px; margin-bottom:6px; }
   .badge { display:inline-block; background:var(--gold); color:white; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; margin-left:8px; }
-  .chart-card { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(30,39,97,0.09); padding:18px 20px; margin-bottom:20px; }
+  .chart-card { background:white; border-radius:14px; box-shadow:0 3px 14px rgba(30,39,97,0.1); padding:20px 22px; margin-bottom:20px; position:relative; overflow:hidden; }
+  .chart-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--gold),var(--navy),var(--purple)); }
   .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
   @media (max-width:800px) { .chart-row { grid-template-columns:1fr; } }
-  .progress-wrap { background:#EDEFF5; border-radius:20px; height:26px; overflow:hidden; margin:10px 0; position:relative; }
-  .progress-fill { background:linear-gradient(90deg, var(--gold), #E0A84A); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:white; font-size:11.5px; font-weight:700; transition:width 0.6s ease; }
-  .target-summary { display:flex; gap:20px; flex-wrap:wrap; margin-top:12px; }
+  .progress-wrap { background:#EDEFF5; border-radius:20px; height:28px; overflow:hidden; margin:10px 0; }
+  .progress-fill { background:linear-gradient(90deg, var(--gold), #E8B85C); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:white; font-size:11.5px; font-weight:700; transition:width 0.8s ease; }
+  .target-summary { display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; }
   .target-summary div { flex:1; min-width:120px; }
-  .target-summary .big { font-size:20px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
+  .target-summary .big { font-size:21px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
   .target-summary .lbl { font-size:11px; color:#8891A3; }
+  .section-note { font-size:11.5px; color:#8891A3; font-style:italic; margin:-8px 0 16px; }
   footer { text-align:center; padding:20px; font-size:11.5px; color:#8891A3; }
 </style>
 </head>
@@ -71,14 +82,13 @@
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 18 Jul 2026 19:00 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 18 Jul 2026 19:34 UTC</div>
 </header>
 <nav>
-  <button class="tab-btn active" data-tab="jas">JAS 2026 (Focus)</button>
-  <button class="tab-btn" data-tab="tilldate">Till Date</button>
-  <button class="tab-btn" data-tab="otherq">Other Quarters</button>
-  <button class="tab-btn" data-tab="pipeline">Active Pipeline</button>
-  <button class="tab-btn" data-tab="leadfunnel">Lead Funnel</button>
+  <button class="tab-btn active" data-tab="jas">🎯 JAS 2026 (Focus)</button>
+  <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
+  <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
+  <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
 </nav>
 <main>
 
@@ -93,15 +103,17 @@
         <div><div class="big">₹8,00,00,000</div><div class="lbl">Target (JAS)</div></div>
         <div><div class="big" style="color:var(--gold)">₹1,18,52,400</div><div class="lbl">Achieved So Far</div></div>
         <div><div class="big" style="color:var(--red)">₹6,81,47,600</div><div class="lbl">Gap Remaining</div></div>
+        <div><div class="big" style="color:var(--purple)">₹21,36,000</div><div class="lbl">Agreement Signed (soon)</div></div>
       </div>
       <canvas id="targetChart" height="90"></canvas>
     </div>
 
     <div class="stat-row">
-      <div class="stat-card"><div class="num">19</div><div class="label">Total Go-Live (JAS)</div></div>
-      <div class="stat-card"><div class="num">66</div><div class="label">Pitches (July)</div></div>
-      <div class="stat-card"><div class="num">17</div><div class="label">Audits (July)</div></div>
-      <div class="stat-card"><div class="num">111.8%</div><div class="label">Audit → Go-Live Conv. (July)</div></div>
+      <div class="stat-card"><div class="icon-tag">🏆</div><div class="num">19</div><div class="label">Total Go-Live (JAS)</div></div>
+      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">86</div><div class="label">Pitches (July)</div></div>
+      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">95</div><div class="label">Audits Done (July)</div></div>
+      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">20.0%</div><div class="label">Audit → Go-Live Conv.</div></div>
+      <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">₹6,23,811</div><div class="label">Avg Ticket Size (JAS)</div></div>
     </div>
 
     <div class="chart-row">
@@ -122,26 +134,42 @@
               <div class="name">Gaurav</div>
               <div class="count">9 brands live</div>
               <div class="arr">₹51,02,400</div>
+              <div class="avg">Avg: ₹5,66,933</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Trishun</div>
               <div class="count">5 brands live</div>
               <div class="arr">₹38,88,000</div>
+              <div class="avg">Avg: ₹7,77,600</div>
             </div>
             <div class="owner-card">
               <div class="initials">R</div>
               <div class="name">Rahul</div>
               <div class="count">4 brands live</div>
               <div class="arr">₹23,28,000</div>
+              <div class="avg">Avg: ₹5,82,000</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Tushar</div>
               <div class="count">1 brands live</div>
               <div class="arr">₹5,34,000</div>
+              <div class="avg">Avg: ₹5,34,000</div>
             </div>
     </div>
+
+    <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
+    <div class="stat-row">
+      <div class="stat-card purple"><div class="num">4</div><div class="label">Brands Signed</div></div>
+      <div class="stat-card money"><div class="num">₹21,36,000</div><div class="label">EARR (Signed, Pending Go-Live)</div></div>
+    </div>
+    <table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
+<tr><td>Rahul</td><td class='center-cell'>2</td><td class='num-cell'>₹10,86,000</td></tr>
+<tr><td>Trishun</td><td class='center-cell'>2</td><td class='num-cell'>₹10,50,000</td></tr>
+<tr class='total-row'><td>Total</td><td class='center-cell'>4</td><td class='num-cell'>₹21,36,000</td></tr>
+</table>
+
     <h2>July 2026 Go-Live — 19 Brands · ₹1,18,52,400</h2><table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>EARR</th></tr><tr><td>Kuvar jewels</td><td>Tushar</td><td>2026-07-17</td><td class='num-cell'>₹5,34,000</td></tr>
 <tr><td>cforcover</td><td>Gaurav</td><td>2026-07-16</td><td class='num-cell'>₹8,40,000</td></tr>
 <tr><td>Pronk</td><td>Gaurav</td><td>2026-07-14</td><td class='num-cell'>₹6,00,000</td></tr>
@@ -175,10 +203,10 @@
   </div>
 
   <div class="tab-content" id="tilldate">
-    <h2>Total Go-Live — All Time (Team Only)</h2>
+    <h2>⭐ Total Go-Live — All Time (Team Only)</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="num">81</div><div class="label">Total Go-Live</div></div>
-      <div class="stat-card"><div class="num">₹4,54,56,000</div><div class="label">Total EARR</div></div>
+      <div class="stat-card money"><div class="num">₹4,54,56,000</div><div class="label">Total EARR</div></div>
     </div>
     <div class="owner-row">
       
@@ -187,26 +215,34 @@
               <div class="name">Rahul</div>
               <div class="count">49 brands live</div>
               <div class="arr">₹2,55,57,600</div>
+              <div class="avg">Avg: ₹5,21,584</div>
             </div>
             <div class="owner-card">
               <div class="initials">G</div>
               <div class="name">Gaurav</div>
               <div class="count">23 brands live</div>
               <div class="arr">₹1,37,84,400</div>
+              <div class="avg">Avg: ₹5,99,322</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Trishun</div>
               <div class="count">8 brands live</div>
               <div class="arr">₹55,80,000</div>
+              <div class="avg">Avg: ₹6,97,500</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Tushar</div>
               <div class="count">1 brands live</div>
               <div class="arr">₹5,34,000</div>
+              <div class="avg">Avg: ₹5,34,000</div>
             </div>
     </div>
+
+    <h2>📅 Quarterly Segregation</h2>
+    <table><tr><th>Quarter</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr><tr ><td>AMJ 2026</td><td class='center-cell'>44</td><td class='num-cell'>₹2,44,47,600</td></tr><tr style='background:#FBF1E0'><td>JAS 2026 (current)</td><td class='center-cell'>19</td><td class='num-cell'>₹1,18,52,400</td></tr><tr ><td>JFM 2026</td><td class='center-cell'>15</td><td class='num-cell'>₹80,04,000</td></tr><tr ><td>OND 2025</td><td class='center-cell'>3</td><td class='num-cell'>₹11,52,000</td></tr><tr class='total-row'><td>Grand Total</td><td class='center-cell'>81</td><td class='num-cell'>₹4,54,56,000</td></tr></table>
+
     <h2>All Go-Live Brands — Till Date</h2>
     <table>
       <tr><th>Brand</th><th>Owner</th><th>Go-Live Date</th><th style="text-align:right">EARR</th></tr>
@@ -296,56 +332,60 @@
     </table>
   </div>
 
-  <div class="tab-content" id="otherq">
-    <h2>Other Quarters (Team Only)</h2>
-    <h2>AMJ 2026 — 44 Brands · ₹2,44,47,600</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
-<tr><td>Rahul</td><td class='center-cell'>27</td><td class='num-cell'>₹1,40,73,600</td></tr>
-<tr><td>Gaurav</td><td class='center-cell'>14</td><td class='num-cell'>₹86,82,000</td></tr>
-<tr><td>Trishun</td><td class='center-cell'>3</td><td class='num-cell'>₹16,92,000</td></tr>
-<tr class='total-row'><td>Total</td><td class='center-cell'>44</td><td class='num-cell'>₹2,44,47,600</td></tr>
-</table><h2>JFM 2026 — 15 Brands · ₹80,04,000</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
-<tr><td>Rahul</td><td class='center-cell'>15</td><td class='num-cell'>₹80,04,000</td></tr>
-<tr class='total-row'><td>Total</td><td class='center-cell'>15</td><td class='num-cell'>₹80,04,000</td></tr>
-</table><h2>OND 2025 — 3 Brands · ₹11,52,000</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
-<tr><td>Rahul</td><td class='center-cell'>3</td><td class='num-cell'>₹11,52,000</td></tr>
-<tr class='total-row'><td>Total</td><td class='center-cell'>3</td><td class='num-cell'>₹11,52,000</td></tr>
-</table>
-  </div>
-
   <div class="tab-content" id="pipeline">
-    <h2>Active Pipeline — Pre Audit + Audit Done (Team Only)</h2>
+    <h2>🚦 Weighted Active Pipeline (Team Only)</h2>
+    <p class="section-note">Weighted using stage-conversion assumptions: Pitch 5%, Pre Audit 15%, Audit Done 30%.</p>
     <div class="stat-row">
-      <div class="stat-card"><div class="num">115</div><div class="label">Active Brands</div></div>
-      <div class="stat-card"><div class="num">₹7,52,60,400</div><div class="label">Pipeline EARR</div></div>
+      <div class="stat-card"><div class="num">138</div><div class="label">Active Brands</div></div>
+      <div class="stat-card money"><div class="num">₹8,21,90,400</div><div class="label">Raw Pipeline EARR</div></div>
+      <div class="stat-card purple"><div class="num">₹1,74,05,820</div><div class="label">Weighted Expected Value</div></div>
     </div>
-    <table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
-<tr><td>Gaurav</td><td class='center-cell'>41</td><td class='num-cell'>₹3,36,72,000</td></tr>
-<tr><td>Rahul</td><td class='center-cell'>29</td><td class='num-cell'>₹1,78,26,000</td></tr>
-<tr><td>Trishun</td><td class='center-cell'>32</td><td class='num-cell'>₹1,68,02,400</td></tr>
-<tr><td>Tushar</td><td class='center-cell'>13</td><td class='num-cell'>₹69,60,000</td></tr>
-<tr class='total-row'><td>Total</td><td class='center-cell'>115</td><td class='num-cell'>₹7,52,60,400</td></tr>
+    <div class="chart-card">
+      <h2 style="margin-top:0">Pipeline by Stage — Raw vs Weighted</h2>
+      <canvas id="pipelineChart"></canvas>
+    </div>
+    <h2>Stage Summary</h2>
+    <table><tr><th>Stage</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th><th class='center-cell'>Conv. Weight</th><th style='text-align:right'>Weighted Value</th></tr>
+<tr><td>Pitch</td><td class='center-cell'>23</td><td class='num-cell'>₹69,30,000</td><td class='center-cell'>5%</td><td class='num-cell'>₹3,46,500</td></tr>
+<tr><td>Pre Audit</td><td class='center-cell'>57</td><td class='num-cell'>₹3,67,92,000</td><td class='center-cell'>15%</td><td class='num-cell'>₹55,18,800</td></tr>
+<tr><td>Audit Done</td><td class='center-cell'>58</td><td class='num-cell'>₹3,84,68,400</td><td class='center-cell'>30%</td><td class='num-cell'>₹1,15,40,520</td></tr>
+<tr class='total-row'><td colspan='2'>Total (138 brands)</td><td class='num-cell'>₹8,21,90,400</td><td></td><td class='num-cell'>₹1,74,05,820</td></tr>
+</table>
+    <h2>By Owner × Stage</h2>
+    <table><tr><th>Owner</th><th class='center-cell'>Pitch</th><th class='center-cell'>Pre Audit</th><th class='center-cell'>Audit Done</th><th style='text-align:right'>Weighted Value</th></tr>
+<tr><td>Gaurav</td><td class='center-cell'>16 · ₹43,26,000</td><td class='center-cell'>18 · ₹1,44,72,000</td><td class='center-cell'>23 · ₹1,92,00,000</td><td class='num-cell'>₹81,47,100</td></tr>
+<tr><td>Rahul</td><td class='center-cell'>3 · ₹14,28,000</td><td class='center-cell'>18 · ₹1,12,26,000</td><td class='center-cell'>11 · ₹66,00,000</td><td class='num-cell'>₹37,35,300</td></tr>
+<tr><td>Trishun</td><td class='center-cell'>3 · ₹11,76,000</td><td class='center-cell'>15 · ₹78,18,000</td><td class='center-cell'>17 · ₹89,84,400</td><td class='num-cell'>₹39,26,820</td></tr>
+<tr><td>Tushar</td><td class='center-cell'>1 · ₹0</td><td class='center-cell'>6 · ₹32,76,000</td><td class='center-cell'>7 · ₹36,84,000</td><td class='num-cell'>₹15,96,600</td></tr>
 </table>
   </div>
 
   <div class="tab-content" id="leadfunnel">
-    <h2>MQL Lead Funnel — July 2026 MTD (Team Only)</h2>
+    <h2>📊 MQL Lead Funnel — July 2026 MTD (Team Only)</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="num">464</div><div class="label">Total Leads</div></div>
-      <div class="stat-card"><div class="num">252</div><div class="label">Unqualified</div></div>
+      <div class="stat-card red"><div class="num">252</div><div class="label">Unqualified</div></div>
       <div class="stat-card"><div class="num">98</div><div class="label">Open</div></div>
-      <div class="stat-card"><div class="num">27</div><div class="label">Contacted</div></div>
+      <div class="stat-card purple"><div class="num">27</div><div class="label">Contacted</div></div>
       <div class="stat-card"><div class="num">1</div><div class="label">Could Not Connect</div></div>
-      <div class="stat-card"><div class="num">86</div><div class="label">Converted</div></div>
+      <div class="stat-card green"><div class="num">86</div><div class="label">Converted</div></div>
     </div>
     <div class="chart-card">
       <h2 style="margin-top:0">Lead Status Breakdown</h2>
       <canvas id="leadChart2"></canvas>
     </div>
-    <p style="font-size:11.5px;color:#8891A3;font-style:italic;">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off.</p>
+    <h2>By Rep</h2>
+    <table><tr><th>Owner</th><th class='center-cell'>Total</th><th class='center-cell'>Unqualified</th><th class='center-cell'>Open</th><th class='center-cell'>Contacted</th><th class='center-cell'>Could Not Connect</th><th class='center-cell'>Converted</th></tr>
+<tr><td>Gaurav</td><td class='center-cell'>138</td><td class='center-cell'>79</td><td class='center-cell'>26</td><td class='center-cell'>3</td><td class='center-cell'>1</td><td class='center-cell'>29</td></tr>
+<tr><td>Rahul</td><td class='center-cell'>97</td><td class='center-cell'>59</td><td class='center-cell'>20</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>18</td></tr>
+<tr><td>Trishun</td><td class='center-cell'>142</td><td class='center-cell'>78</td><td class='center-cell'>34</td><td class='center-cell'>7</td><td class='center-cell'>0</td><td class='center-cell'>23</td></tr>
+<tr><td>Tushar</td><td class='center-cell'>87</td><td class='center-cell'>36</td><td class='center-cell'>18</td><td class='center-cell'>17</td><td class='center-cell'>0</td><td class='center-cell'>16</td></tr>
+<tr class='total-row'><td>Team Total</td><td class='center-cell'>464</td><td class='center-cell'>252</td><td class='center-cell'>98</td><td class='center-cell'>27</td><td class='center-cell'>1</td><td class='center-cell'>86</td></tr></table>
+    <p class="section-note">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off.</p>
   </div>
 
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 18 Jul 2026 19:00 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 18 Jul 2026 19:34 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -356,14 +396,14 @@
     });
   });
 
-  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [80000000, 11852400.0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Rahul", "Tushar"], "values": [5102400.0, 3888000.0, 2328000.0, 534000.0]}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [252, 98, 27, 1, 86]}};
-  const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A';
+  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [80000000, 11852400.0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Rahul", "Tushar"], "values": [5102400.0, 3888000.0, 2328000.0, 534000.0]}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [252, 98, 27, 1, 86]}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done"], "values": [6930000.0, 36792000.0, 38468400.0], "weighted": [346500.0, 5518800.0, 11540520.0]}};
+  const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
 
   new Chart(document.getElementById('targetChart'), {
     type: 'bar',
     data: {
       labels: CHART_DATA.targetVsAchieved.labels,
-      datasets: [{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD], borderRadius: 6 }]
+      datasets: [{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD], borderRadius: 8 }]
     },
     options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' } } } }
   });
@@ -372,7 +412,7 @@
     type: 'bar',
     data: {
       labels: CHART_DATA.byOwner.labels,
-      datasets: [{ label: 'EARR', data: CHART_DATA.byOwner.values, backgroundColor: NAVY, borderRadius: 6 }]
+      datasets: [{ label: 'EARR', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: 8 }]
     },
     options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => '₹' + (v/100000).toFixed(0) + 'L' } } } }
   });
@@ -380,13 +420,25 @@
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
   new Chart(document.getElementById('leadChart'), {
     type: 'doughnut',
-    data: { labels: CHART_DATA.leadFunnel.labels, datasets: [{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors }] },
+    data: { labels: CHART_DATA.leadFunnel.labels, datasets: [{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }] },
     options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 10.5 } } } } }
   });
   new Chart(document.getElementById('leadChart2'), {
     type: 'bar',
-    data: { labels: CHART_DATA.leadFunnel.labels, datasets: [{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderRadius: 6 }] },
+    data: { labels: CHART_DATA.leadFunnel.labels, datasets: [{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderRadius: 8 }] },
     options: { plugins: { legend: { display: false } } }
+  });
+
+  new Chart(document.getElementById('pipelineChart'), {
+    type: 'bar',
+    data: {
+      labels: CHART_DATA.pipelineStages.labels,
+      datasets: [
+        { label: 'Raw EARR', data: CHART_DATA.pipelineStages.values, backgroundColor: ICE, borderRadius: 8 },
+        { label: 'Weighted Value', data: CHART_DATA.pipelineStages.weighted, backgroundColor: PURPLE, borderRadius: 8 }
+      ]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { ticks: { callback: v => '₹' + (v/100000).toFixed(0) + 'L' } } } }
   });
 </script>
 </body>
