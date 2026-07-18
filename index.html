@@ -5,92 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kwik Ads Dashboard — Live from Salesforce</title>
 <style>
-  :root { --navy:#1E2761; --gold:#C98A2C; --slate:#3A3F55; --bg:#F7F8FC; --ice:#CADCFC; --border:#E5E8EF; }
+  :root { --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F7F8FC; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Calibri,sans-serif; background:var(--bg); color:var(--slate); }
   header { background:var(--navy); color:white; padding:24px 32px; }
   header .brand { font-size:13px; letter-spacing:2px; color:var(--gold); font-weight:700; text-transform:uppercase; }
-  header h1 { font-family:Georgia,serif; font-size:28px; margin:6px 0; }
+  header h1 { font-family:Georgia,serif; font-size:26px; margin:6px 0; }
   header .meta { font-size:13px; color:var(--ice); }
-  main { padding:28px 32px; max-width:1100px; margin:0 auto; }
-  h2 { font-family:Georgia,serif; color:var(--navy); font-size:20px; margin:24px 0 14px; }
-  .stat-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
-  .stat-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:16px 20px; flex:1; min-width:140px; }
-  .stat-card .num { font-size:24px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
-  .stat-card .label { font-size:12px; color:#8891A3; margin-top:4px; }
-  .owner-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
-  .owner-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:14px 18px; flex:1; min-width:150px; }
-  .owner-card .initials { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--navy); color:white; font-size:11px; font-weight:700; margin-bottom:6px; }
-  .owner-card .name { font-weight:700; color:var(--navy); font-size:13px; }
-  .owner-card .count { font-size:12px; color:var(--slate); margin:3px 0; }
-  .owner-card .arr { font-size:14px; font-weight:700; color:var(--gold); }
-  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(30,39,97,0.06); font-size:13px; margin-bottom:20px; }
-  th { background:var(--navy); color:white; text-align:left; padding:9px 12px; font-size:12px; }
-  td { padding:8px 12px; border-bottom:1px solid var(--border); }
+  nav { display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; }
+  nav button { background:none; border:none; color:var(--ice); padding:14px 16px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; }
+  nav button.active { color:white; border-bottom-color:var(--gold); }
+  main { padding:26px 32px; max-width:1150px; margin:0 auto; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  h2 { font-family:Georgia,serif; color:var(--navy); font-size:19px; margin:22px 0 12px; }
+  .stat-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+  .stat-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:14px 18px; flex:1; min-width:130px; }
+  .stat-card .num { font-size:22px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
+  .stat-card .label { font-size:11.5px; color:#8891A3; margin-top:3px; }
+  .owner-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .owner-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(30,39,97,0.08); padding:12px 16px; flex:1; min-width:140px; }
+  .owner-card .initials { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--navy); color:white; font-size:10.5px; font-weight:700; margin-bottom:5px; }
+  .owner-card .name { font-weight:700; color:var(--navy); font-size:12.5px; }
+  .owner-card .count { font-size:11.5px; color:var(--slate); margin:3px 0; }
+  .owner-card .arr { font-size:13px; font-weight:700; color:var(--gold); }
+  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(30,39,97,0.06); font-size:12.5px; margin-bottom:18px; }
+  th { background:var(--navy); color:white; text-align:left; padding:8px 12px; font-size:11.5px; }
+  td { padding:7px 12px; border-bottom:1px solid var(--border); }
+  tr.total-row td { font-weight:700; background:var(--ice); color:var(--navy); }
   .num-cell { text-align:right; }
   .center-cell { text-align:center; }
+  .empty-state { background:white; border-radius:10px; padding:28px; text-align:center; color:#8891A3; margin-bottom:18px; }
+  .empty-state .icon { font-size:28px; margin-bottom:6px; }
+  .badge { display:inline-block; background:var(--gold); color:white; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; margin-left:8px; }
   footer { text-align:center; padding:20px; font-size:11.5px; color:#8891A3; }
 </style>
 </head>
 <body>
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
-  <h1>Kwik Ads Dashboard</h1>
-  <div class="meta">Live from Salesforce · Auto-synced 18 Jul 2026 15:41 UTC</div>
+  <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 18 Jul 2026 15:55 UTC</div>
 </header>
+<nav>
+  <button class="tab-btn active" data-tab="jas">JAS 2026 (Focus)</button>
+  <button class="tab-btn" data-tab="tilldate">Till Date</button>
+  <button class="tab-btn" data-tab="otherq">Other Quarters</button>
+  <button class="tab-btn" data-tab="pipeline">Active Pipeline</button>
+  <button class="tab-btn" data-tab="leadfunnel">Lead Funnel</button>
+</nav>
 <main>
-  <h2>Total Go-Live — All Time</h2>
-  <div class="stat-row">
-    <div class="stat-card"><div class="num">83</div><div class="label">Total Go-Live</div></div>
-    <div class="stat-card"><div class="num">₹4,66,92,000</div><div class="label">Total EARR</div></div>
-  </div>
-  <div class="owner-row">
-    
-            <div class="owner-card">
-              <div class="initials">R</div>
-              <div class="name">Rahul</div>
-              <div class="count">49 brands live</div>
-              <div class="arr">₹2,55,57,600</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">G</div>
-              <div class="name">Gaurav</div>
-              <div class="count">23 brands live</div>
-              <div class="arr">₹1,37,84,400</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">T</div>
-              <div class="name">Trishun</div>
-              <div class="count">8 brands live</div>
-              <div class="arr">₹55,80,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">AC</div>
-              <div class="name">Aman Choudhary</div>
-              <div class="count">1 brands live</div>
-              <div class="arr">₹7,56,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">T</div>
-              <div class="name">Tushar</div>
-              <div class="count">1 brands live</div>
-              <div class="arr">₹5,34,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">VM</div>
-              <div class="name">Vaishak Mohan</div>
-              <div class="count">1 brands live</div>
-              <div class="arr">₹4,80,000</div>
-            </div>
-  </div>
 
-  <h2>This Month — Go-Live</h2>
-  <div class="stat-row">
-    <div class="stat-card"><div class="num">20</div><div class="label">Go-Live (July 2026)</div></div>
-    <div class="stat-card"><div class="num">₹1,26,08,400</div><div class="label">EARR (July)</div></div>
-  </div>
-  <div class="owner-row">
-    
+  <div class="tab-content active" id="jas">
+    <h2>JAS 2026 — Total Go-Live (Team Only)</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num">19</div><div class="label">Total Go-Live (JAS)</div></div>
+      <div class="stat-card"><div class="num">₹1,18,52,400</div><div class="label">Total EARR (JAS)</div></div>
+    </div>
+    <div class="owner-row">
+      
             <div class="owner-card">
               <div class="initials">G</div>
               <div class="name">Gaurav</div>
@@ -110,10 +83,69 @@
               <div class="arr">₹23,28,000</div>
             </div>
             <div class="owner-card">
-              <div class="initials">AC</div>
-              <div class="name">Aman Choudhary</div>
+              <div class="initials">T</div>
+              <div class="name">Tushar</div>
               <div class="count">1 brands live</div>
-              <div class="arr">₹7,56,000</div>
+              <div class="arr">₹5,34,000</div>
+            </div>
+    </div>
+    <h2>July 2026 Go-Live — 19 Brands · ₹1,18,52,400</h2><table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>EARR</th></tr><tr><td>Kuvar jewels</td><td>Tushar</td><td>2026-07-17</td><td class='num-cell'>₹5,34,000</td></tr>
+<tr><td>cforcover</td><td>Gaurav</td><td>2026-07-16</td><td class='num-cell'>₹8,40,000</td></tr>
+<tr><td>Pronk</td><td>Gaurav</td><td>2026-07-14</td><td class='num-cell'>₹6,00,000</td></tr>
+<tr><td>hyperballik.com</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,52,000</td></tr>
+<tr><td>Taali Toys</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,34,000</td></tr>
+<tr><td>Carrots Jewellery</td><td>Gaurav</td><td>2026-07-11</td><td class='num-cell'>₹5,16,000</td></tr>
+<tr><td>VeeCare Dental - Kwik Ads</td><td>Rahul</td><td>2026-07-11</td><td class='num-cell'>₹5,28,000</td></tr>
+<tr><td>Reistor - Storefront</td><td>Trishun</td><td>2026-07-10</td><td class='num-cell'>₹12,12,000</td></tr>
+<tr><td>Bluprint</td><td>Gaurav</td><td>2026-07-09</td><td class='num-cell'>₹5,34,000</td></tr>
+<tr><td>beweird</td><td>Trishun</td><td>2026-07-09</td><td class='num-cell'>₹4,80,000</td></tr>
+<tr><td>WearFitMentor</td><td>Rahul</td><td>2026-07-06</td><td class='num-cell'>₹5,88,000</td></tr>
+<tr><td>Capshap-Storefront-Checkout 1.0</td><td>Rahul</td><td>2026-07-06</td><td class='num-cell'>₹6,24,000</td></tr>
+<tr><td>bluberyl</td><td>Trishun</td><td>2026-07-06</td><td class='num-cell'>₹8,40,000</td></tr>
+<tr><td>Lotusfashions</td><td>Rahul</td><td>2026-07-01</td><td class='num-cell'>₹5,88,000</td></tr>
+<tr><td>Rajganga Paytan</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹6,24,000</td></tr>
+<tr><td>Sillima Wellness</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹7,32,000</td></tr>
+<tr><td>Skin Science, Perfected</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,12,400</td></tr>
+<tr><td>lololepa</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,16,000</td></tr>
+<tr><td>Yodley - Storefront</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹4,98,000</td></tr>
+<tr class='total-row'><td colspan='3'>July Total</td><td class='num-cell'>₹1,18,52,400</td></tr></table>
+                <div class="empty-state">
+                  <div class="icon">🔮</div>
+                  <b>August 2026 — Not started yet</b>
+                  <p style="margin:4px 0 0">Data will appear here once brands go live this month</p>
+                </div>
+                <div class="empty-state">
+                  <div class="icon">🔮</div>
+                  <b>September 2026 — Not started yet</b>
+                  <p style="margin:4px 0 0">Data will appear here once brands go live this month</p>
+                </div>
+  </div>
+
+  <div class="tab-content" id="tilldate">
+    <h2>Total Go-Live — All Time (Team Only)</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num">81</div><div class="label">Total Go-Live</div></div>
+      <div class="stat-card"><div class="num">₹4,54,56,000</div><div class="label">Total EARR</div></div>
+    </div>
+    <div class="owner-row">
+      
+            <div class="owner-card">
+              <div class="initials">R</div>
+              <div class="name">Rahul</div>
+              <div class="count">49 brands live</div>
+              <div class="arr">₹2,55,57,600</div>
+            </div>
+            <div class="owner-card">
+              <div class="initials">G</div>
+              <div class="name">Gaurav</div>
+              <div class="count">23 brands live</div>
+              <div class="arr">₹1,37,84,400</div>
+            </div>
+            <div class="owner-card">
+              <div class="initials">T</div>
+              <div class="name">Trishun</div>
+              <div class="count">8 brands live</div>
+              <div class="arr">₹55,80,000</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
@@ -121,62 +153,36 @@
               <div class="count">1 brands live</div>
               <div class="arr">₹5,34,000</div>
             </div>
-  </div>
-
-  <h2>Active Pipeline (Pre Audit + Audit Done)</h2>
-  <div class="stat-row">
-    <div class="stat-card"><div class="num">121</div><div class="label">Active Brands</div></div>
-    <div class="stat-card"><div class="num">₹8,01,38,400</div><div class="label">Pipeline EARR</div></div>
-  </div>
-  <table>
-    <tr><th>Owner</th><th class="center-cell">Brands</th><th style="text-align:right">EARR</th></tr>
-    <tr><td>Gaurav</td><td class='center-cell'>44</td><td class='num-cell'>₹3,53,70,000</td></tr>
-<tr><td>Rahul</td><td class='center-cell'>29</td><td class='num-cell'>₹1,78,26,000</td></tr>
-<tr><td>Trishun</td><td class='center-cell'>32</td><td class='num-cell'>₹1,68,02,400</td></tr>
-<tr><td>Tushar</td><td class='center-cell'>13</td><td class='num-cell'>₹69,60,000</td></tr>
-<tr><td>vignesh babu</td><td class='center-cell'>2</td><td class='num-cell'>₹26,40,000</td></tr>
-<tr><td>Aman Choudhary</td><td class='center-cell'>1</td><td class='num-cell'>₹5,40,000</td></tr>
-
-  </table>
-
-  <h2>MQL Lead Funnel — July 2026 MTD</h2>
-  <div class="stat-row">
-    <div class="stat-card"><div class="num">469</div><div class="label">Total Leads</div></div>
-    <div class="stat-card"><div class="num">87</div><div class="label">Converted</div></div>
-    <div class="stat-card"><div class="num">257</div><div class="label">Unqualified</div></div>
-  </div>
-
-  <h2>All Go-Live Brands — Till Date</h2>
-  <table>
-    <tr><th>Brand</th><th>Owner</th><th>Go-Live Date</th><th style="text-align:right">EARR</th></tr>
-    <tr><td>Kuvar jewels</td><td>Tushar</td><td>2026-07-17</td><td class='num-cell'>₹5,34,000</td></tr>
+    </div>
+    <h2>All Go-Live Brands — Till Date</h2>
+    <table>
+      <tr><th>Brand</th><th>Owner</th><th>Go-Live Date</th><th style="text-align:right">EARR</th></tr>
+      <tr><td>Kuvar jewels</td><td>Tushar</td><td>2026-07-17</td><td class='num-cell'>₹5,34,000</td></tr>
 <tr><td>cforcover</td><td>Gaurav</td><td>2026-07-16</td><td class='num-cell'>₹8,40,000</td></tr>
 <tr><td>Pronk</td><td>Gaurav</td><td>2026-07-14</td><td class='num-cell'>₹6,00,000</td></tr>
 <tr><td>hyperballik.com</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,52,000</td></tr>
 <tr><td>Taali Toys</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>VeeCare Dental - Kwik Ads</td><td>Rahul</td><td>2026-07-11</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>Carrots Jewellery</td><td>Gaurav</td><td>2026-07-11</td><td class='num-cell'>₹5,16,000</td></tr>
+<tr><td>VeeCare Dental - Kwik Ads</td><td>Rahul</td><td>2026-07-11</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>Reistor - Storefront</td><td>Trishun</td><td>2026-07-10</td><td class='num-cell'>₹12,12,000</td></tr>
-<tr><td>Momsever-Storefront-checkout 1.0</td><td>Aman Choudhary</td><td>2026-07-10</td><td class='num-cell'>₹7,56,000</td></tr>
-<tr><td>beweird</td><td>Trishun</td><td>2026-07-09</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>Bluprint</td><td>Gaurav</td><td>2026-07-09</td><td class='num-cell'>₹5,34,000</td></tr>
+<tr><td>beweird</td><td>Trishun</td><td>2026-07-09</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>WearFitMentor</td><td>Rahul</td><td>2026-07-06</td><td class='num-cell'>₹5,88,000</td></tr>
 <tr><td>Capshap-Storefront-Checkout 1.0</td><td>Rahul</td><td>2026-07-06</td><td class='num-cell'>₹6,24,000</td></tr>
 <tr><td>bluberyl</td><td>Trishun</td><td>2026-07-06</td><td class='num-cell'>₹8,40,000</td></tr>
-<tr><td>Sillima Wellness</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹7,32,000</td></tr>
-<tr><td>Rajganga Paytan</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹6,24,000</td></tr>
 <tr><td>Lotusfashions</td><td>Rahul</td><td>2026-07-01</td><td class='num-cell'>₹5,88,000</td></tr>
+<tr><td>Rajganga Paytan</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹6,24,000</td></tr>
+<tr><td>Sillima Wellness</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹7,32,000</td></tr>
 <tr><td>Skin Science, Perfected</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,12,400</td></tr>
 <tr><td>lololepa</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,16,000</td></tr>
 <tr><td>Yodley - Storefront</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹4,98,000</td></tr>
-<tr><td>Castalio</td><td>Rahul</td><td>2026-06-24</td><td class='num-cell'>₹5,16,000</td></tr>
 <tr><td>Femenest</td><td>Rahul</td><td>2026-06-24</td><td class='num-cell'>₹3,60,000</td></tr>
+<tr><td>Castalio</td><td>Rahul</td><td>2026-06-24</td><td class='num-cell'>₹5,16,000</td></tr>
 <tr><td>Ceeje</td><td>Rahul</td><td>2026-06-23</td><td class='num-cell'>₹5,16,000</td></tr>
 <tr><td>bhadras</td><td>Trishun</td><td>2026-06-22</td><td class='num-cell'>₹5,34,000</td></tr>
 <tr><td>alika.in</td><td>Rahul</td><td>2026-06-19</td><td class='num-cell'>₹5,52,000</td></tr>
 <tr><td>frato</td><td>Trishun</td><td>2026-06-18</td><td class='num-cell'>₹6,24,000</td></tr>
 <tr><td>Jewelry for Queen - Kwik Ads</td><td>Rahul</td><td>2026-06-16</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Adizoro - Kwik Ads</td><td>Vaishak Mohan</td><td>2026-06-11</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>khanduapata</td><td>Trishun</td><td>2026-06-11</td><td class='num-cell'>₹5,34,000</td></tr>
 <tr><td>HiProTech</td><td>Rahul</td><td>2026-06-11</td><td class='num-cell'>₹6,24,000</td></tr>
 <tr><td>Kozmetyxttl - Kwik Ads</td><td>Rahul</td><td>2026-06-10</td><td class='num-cell'>₹5,70,000</td></tr>
@@ -201,8 +207,8 @@
 <tr><td>Careone - Kwik Ads</td><td>Rahul</td><td>2026-05-08</td><td class='num-cell'>₹5,16,000</td></tr>
 <tr><td>irui</td><td>Rahul</td><td>2026-05-04</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>Getiam</td><td>Gaurav</td><td>2026-05-01</td><td class='num-cell'>₹7,80,000</td></tr>
-<tr><td>Rooshy - Kwik Ads</td><td>Rahul</td><td>2026-05-01</td><td class='num-cell'>₹4,98,000</td></tr>
 <tr><td>The Zen Crystals</td><td>Gaurav</td><td>2026-05-01</td><td class='num-cell'>₹9,60,000</td></tr>
+<tr><td>Rooshy - Kwik Ads</td><td>Rahul</td><td>2026-05-01</td><td class='num-cell'>₹4,98,000</td></tr>
 <tr><td>THE MANDIR COMPANY</td><td>Gaurav</td><td>2026-05-01</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>The Orikai - Kwik Ads</td><td>Rahul</td><td>2026-04-29</td><td class='num-cell'>₹4,80,000</td></tr>
 <tr><td>Offnorth fashions</td><td>Gaurav</td><td>2026-04-29</td><td class='num-cell'>₹5,34,000</td></tr>
@@ -210,15 +216,15 @@
 <tr><td>The Treddyy - Kwik Ads</td><td>Rahul</td><td>2026-04-27</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>Safe Bee - kwik Ads</td><td>Rahul</td><td>2026-04-17</td><td class='num-cell'>₹6,00,000</td></tr>
 <tr><td>VOOKI - Kwik Ads</td><td>Rahul</td><td>2026-04-12</td><td class='num-cell'>₹4,20,000</td></tr>
+<tr><td>Sinderella - Kwik Ads</td><td>Rahul</td><td>2026-04-02</td><td class='num-cell'>₹4,20,000</td></tr>
 <tr><td>Layer Story - Storefront - Checkout 1.0</td><td>Rahul</td><td>2026-04-02</td><td class='num-cell'>₹4,29,600</td></tr>
 <tr><td>Alfis beauty - Storefront - Checkout 1.0</td><td>Rahul</td><td>2026-04-02</td><td class='num-cell'>₹5,52,000</td></tr>
-<tr><td>Sinderella - Kwik Ads</td><td>Rahul</td><td>2026-04-02</td><td class='num-cell'>₹4,20,000</td></tr>
 <tr><td>Cosmecell - Kwik Ads</td><td>Rahul</td><td>2026-04-01</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>khadi Vastra Udyog - Kwik Ads</td><td>Rahul</td><td>2026-03-19</td><td class='num-cell'>₹6,00,000</td></tr>
 <tr><td>Raichura organic farm - Kwik Ads</td><td>Rahul</td><td>2026-03-18</td><td class='num-cell'>₹5,04,000</td></tr>
 <tr><td>Teestra - Kwik Ads</td><td>Rahul</td><td>2026-03-03</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Mivanaa - Kwik Ads</td><td>Rahul</td><td>2026-03-02</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>Janayush - Kwik Ads</td><td>Rahul</td><td>2026-03-02</td><td class='num-cell'>₹5,28,000</td></tr>
+<tr><td>Mivanaa - Kwik Ads</td><td>Rahul</td><td>2026-03-02</td><td class='num-cell'>₹5,28,000</td></tr>
 <tr><td>Soul wise - Kwik Ads</td><td>Rahul</td><td>2026-03-01</td><td class='num-cell'>₹5,04,000</td></tr>
 <tr><td>Bowie - Kwik Ads</td><td>Rahul</td><td>2026-02-24</td><td class='num-cell'>₹4,87,200</td></tr>
 <tr><td>Krishna Bhog - Kwik Ads</td><td>Rahul</td><td>2026-02-18</td><td class='num-cell'>₹6,00,000</td></tr>
@@ -233,8 +239,61 @@
 <tr><td>Rooplekha - Kwik Ads</td><td>Rahul</td><td>2025-11-27</td><td class='num-cell'>₹2,76,000</td></tr>
 <tr><td>Snore Veda - Ads</td><td>Rahul</td><td>2025-11-11</td><td class='num-cell'>₹3,84,000</td></tr>
 
-  </table>
+      <tr class="total-row"><td colspan="3">Total EARR (Till Date)</td><td class="num-cell">₹4,54,56,000</td></tr>
+    </table>
+  </div>
+
+  <div class="tab-content" id="otherq">
+    <h2>Other Quarters (Team Only)</h2>
+    <h2>AMJ 2026 — 44 Brands · ₹2,44,47,600</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
+<tr><td>Rahul</td><td class='center-cell'>27</td><td class='num-cell'>₹1,40,73,600</td></tr>
+<tr><td>Gaurav</td><td class='center-cell'>14</td><td class='num-cell'>₹86,82,000</td></tr>
+<tr><td>Trishun</td><td class='center-cell'>3</td><td class='num-cell'>₹16,92,000</td></tr>
+<tr class='total-row'><td>Total</td><td class='center-cell'>44</td><td class='num-cell'>₹2,44,47,600</td></tr>
+</table><h2>JFM 2026 — 15 Brands · ₹80,04,000</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
+<tr><td>Rahul</td><td class='center-cell'>15</td><td class='num-cell'>₹80,04,000</td></tr>
+<tr class='total-row'><td>Total</td><td class='center-cell'>15</td><td class='num-cell'>₹80,04,000</td></tr>
+</table><h2>OND 2025 — 3 Brands · ₹11,52,000</h2><table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
+<tr><td>Rahul</td><td class='center-cell'>3</td><td class='num-cell'>₹11,52,000</td></tr>
+<tr class='total-row'><td>Total</td><td class='center-cell'>3</td><td class='num-cell'>₹11,52,000</td></tr>
+</table>
+  </div>
+
+  <div class="tab-content" id="pipeline">
+    <h2>Active Pipeline — Pre Audit + Audit Done (Team Only)</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num">118</div><div class="label">Active Brands</div></div>
+      <div class="stat-card"><div class="num">₹7,69,58,400</div><div class="label">Pipeline EARR</div></div>
+    </div>
+    <table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
+<tr><td>Gaurav</td><td class='center-cell'>44</td><td class='num-cell'>₹3,53,70,000</td></tr>
+<tr><td>Rahul</td><td class='center-cell'>29</td><td class='num-cell'>₹1,78,26,000</td></tr>
+<tr><td>Trishun</td><td class='center-cell'>32</td><td class='num-cell'>₹1,68,02,400</td></tr>
+<tr><td>Tushar</td><td class='center-cell'>13</td><td class='num-cell'>₹69,60,000</td></tr>
+<tr class='total-row'><td>Total</td><td class='center-cell'>118</td><td class='num-cell'>₹7,69,58,400</td></tr>
+</table>
+  </div>
+
+  <div class="tab-content" id="leadfunnel">
+    <h2>MQL Lead Funnel — July 2026 MTD (Team Only)</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num">463</div><div class="label">Total Leads</div></div>
+      <div class="stat-card"><div class="num">86</div><div class="label">Converted</div></div>
+      <div class="stat-card"><div class="num">252</div><div class="label">Unqualified</div></div>
+    </div>
+  </div>
+
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 18 Jul 2026 15:41 UTC · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 18 Jul 2026 15:55 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar · Never manually edit this file — it is overwritten on every sync</footer>
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+</script>
 </body>
 </html>
