@@ -25,6 +25,7 @@ TEAM_OWNERS = {
     "Gaurav Panchal": "Gaurav",
     "Trishun Tripathi": "Trishun",
     "Tushar Joshi": "Tushar",
+    "Vaishak Mohan": "Vaishak",
 }
 
 QUARTER_MONTHS = {
@@ -268,6 +269,9 @@ def build_dashboard():
             lead_by_owner[owner][b] += 1
     total_leads = len(lead_records)
 
+    def pct(n):
+        return f"{(n/total_leads*100):.1f}%" if total_leads else "0%"
+
     generated_at = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
 
     # Chart.js is embedded inline (not loaded from a CDN) so the dashboard
@@ -344,7 +348,8 @@ def build_dashboard():
         for owner in sorted(lead_by_owner.keys()):
             html += f"<tr><td>{owner}</td>" + "".join(f"<td class='center-cell'>{lead_by_owner[owner].get(c, 0)}</td>" for c in cols) + "</tr>\n"
         totals_row = "<tr class='total-row'><td>Team Total</td>" + f"<td class='center-cell'>{total_leads}</td>" + "".join(f"<td class='center-cell'>{lead_buckets.get(c,0)}</td>" for c in cols[1:]) + "</tr>"
-        html += totals_row + "</table>"
+        pct_row = "<tr><td><i>% of Total</i></td><td class='center-cell'>100%</td>" + "".join(f"<td class='center-cell'>{pct(lead_buckets.get(c,0))}</td>" for c in cols[1:]) + "</tr>"
+        html += totals_row + pct_row + "</table>"
         return html
 
     def render_pipeline_stage_table():
@@ -374,6 +379,7 @@ def build_dashboard():
 
     lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
     lead_values = [lead_buckets.get(l, 0) for l in lead_labels]
+    lead_pcts = [round(v/total_leads*100, 1) if total_leads else 0 for v in lead_values]
 
     pipeline_stage_labels = ["Pitch", "Pre Audit", "Audit Done"]
     pipeline_stage_values = [stage_summary[s]["earr"] for s in pipeline_stage_labels]
@@ -384,7 +390,7 @@ def build_dashboard():
     chart_data_json = json.dumps({
         "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
         "byOwner": {"labels": owner_labels, "values": owner_values},
-        "leadFunnel": {"labels": lead_labels, "values": lead_values},
+        "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "pipelineStages": {"labels": pipeline_stage_labels, "values": pipeline_stage_values, "weighted": pipeline_weighted_values},
     })
 
@@ -560,11 +566,11 @@ def build_dashboard():
     <h2>📊 MQL Lead Funnel — {today.strftime('%B %Y')} MTD (Team Only)</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="num">{total_leads}</div><div class="label">Total Leads</div></div>
-      <div class="stat-card red"><div class="num">{lead_buckets.get('Unqualified', 0)}</div><div class="label">Unqualified</div></div>
-      <div class="stat-card"><div class="num">{lead_buckets.get('Open', 0)}</div><div class="label">Open</div></div>
-      <div class="stat-card purple"><div class="num">{lead_buckets.get('Contacted', 0)}</div><div class="label">Contacted</div></div>
-      <div class="stat-card"><div class="num">{lead_buckets.get('Could Not Connect', 0)}</div><div class="label">Could Not Connect</div></div>
-      <div class="stat-card green"><div class="num">{lead_buckets.get('Converted', 0)}</div><div class="label">Converted</div></div>
+      <div class="stat-card red"><div class="num">{lead_buckets.get('Unqualified', 0)}</div><div class="label">Unqualified · {pct(lead_buckets.get('Unqualified', 0))}</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Open', 0)}</div><div class="label">Open · {pct(lead_buckets.get('Open', 0))}</div></div>
+      <div class="stat-card purple"><div class="num">{lead_buckets.get('Contacted', 0)}</div><div class="label">Contacted · {pct(lead_buckets.get('Contacted', 0))}</div></div>
+      <div class="stat-card"><div class="num">{lead_buckets.get('Could Not Connect', 0)}</div><div class="label">Could Not Connect · {pct(lead_buckets.get('Could Not Connect', 0))}</div></div>
+      <div class="stat-card green"><div class="num">{lead_buckets.get('Converted', 0)}</div><div class="label">Converted · {pct(lead_buckets.get('Converted', 0))}</div></div>
     </div>
     <div class="chart-card">
       <h2 style="margin-top:0">Lead Status Breakdown</h2>
@@ -609,15 +615,23 @@ def build_dashboard():
   }});
 
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
+  const leadTooltip = {{
+    callbacks: {{
+      label: (ctx) => {{
+        const pct = CHART_DATA.leadFunnel.pcts[ctx.dataIndex];
+        return `${{ctx.label}}: ${{ctx.raw}} (${{pct}}%)`;
+      }}
+    }}
+  }};
   new Chart(document.getElementById('leadChart'), {{
     type: 'doughnut',
     data: {{ labels: CHART_DATA.leadFunnel.labels, datasets: [{{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }}] }},
-    options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }} }} }}
+    options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: leadTooltip }} }}
   }});
   new Chart(document.getElementById('leadChart2'), {{
     type: 'bar',
     data: {{ labels: CHART_DATA.leadFunnel.labels, datasets: [{{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderRadius: 8 }}] }},
-    options: {{ plugins: {{ legend: {{ display: false }} }} }}
+    options: {{ plugins: {{ legend: {{ display: false }}, tooltip: leadTooltip }} }}
   }});
 
   new Chart(document.getElementById('pipelineChart'), {{
