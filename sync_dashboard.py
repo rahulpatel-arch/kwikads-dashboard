@@ -36,7 +36,7 @@ QUARTER_MONTHS = {
 }
 FOCUS_QUARTER = "JAS"
 FOCUS_YEAR = 2026
-JAS_TARGET = 8_00_00_000  # Rs 8 Cr
+JAS_TARGET = 10_00_00_000  # Rs 10 Cr
 
 # Weighted active pipeline conversion assumptions
 STAGE_WEIGHTS = {
@@ -377,6 +377,12 @@ def build_dashboard():
     owner_labels = [o for o, _ in sorted(focus_data["owner_totals"].items(), key=lambda x: -x[1][1])] if focus_data["owner_totals"] else []
     owner_values = [focus_data["owner_totals"][o][1] for o in owner_labels]
 
+    # "Achievement by Owner" (chart + cards directly under it) excludes Rahul on request —
+    # every other section (Till Date, Pipeline, Lead Funnel) still includes him.
+    achievement_owner_totals = {o: v for o, v in focus_data["owner_totals"].items() if o != "Rahul"}
+    achievement_labels = [o for o, _ in sorted(achievement_owner_totals.items(), key=lambda x: -x[1][1])] if achievement_owner_totals else []
+    achievement_values = [achievement_owner_totals[o][1] for o in achievement_labels]
+
     lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
     lead_values = [lead_buckets.get(l, 0) for l in lead_labels]
     lead_pcts = [round(v/total_leads*100, 1) if total_leads else 0 for v in lead_values]
@@ -389,7 +395,7 @@ def build_dashboard():
 
     chart_data_json = json.dumps({
         "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
-        "byOwner": {"labels": owner_labels, "values": owner_values},
+        "byOwner": {"labels": achievement_labels, "values": achievement_values},
         "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "pipelineStages": {"labels": pipeline_stage_labels, "values": pipeline_stage_values, "weighted": pipeline_weighted_values},
     })
@@ -510,7 +516,7 @@ def build_dashboard():
     </div>
 
     <div class="owner-row">
-      {render_owner_cards(focus_data['owner_totals'])}
+      {render_owner_cards(achievement_owner_totals)}
     </div>
 
     <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
