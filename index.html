@@ -22,67 +22,67 @@
 
 </script>
 <style>
-  :root { --navy:#1E2761; --navy-light:#2A3480; --gold:#C98A2C; --slate:#3A3F55; --bg:#F0F2FA; --ice:#CADCFC; --border:#E5E8EF; --white:#FFFFFF; --green:#1F7A1F; --red:#B33A3A; --purple:#6C4FB6; }
+  :root { --navy:#7B8FFF; --navy-light:#242A52; --gold:#E0AC4F; --slate:#C4CAE4; --bg:#0D1024; --ice:#2B3164; --border:rgba(255,255,255,0.08); --white:#FFFFFF; --green:#4ECB4E; --red:#F0716D; --purple:#B39CF0; --card:#171B3A; --heading:#AEB9FF; --muted:#8189B0; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Calibri,sans-serif; background:var(--bg); color:var(--slate); }
-  header { background:linear-gradient(135deg, var(--navy) 0%, #2E3A94 50%, #3D2E7C 100%); color:white; padding:28px 32px; box-shadow:0 4px 20px rgba(30,39,97,0.25); }
+  header { background:linear-gradient(135deg, #171B3A 0%, #232A5C 50%, #2E2258 100%); color:white; padding:28px 32px; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
   header .brand { font-size:13px; letter-spacing:3px; color:var(--gold); font-weight:700; text-transform:uppercase; }
   header h1 { font-family:Georgia,serif; font-size:28px; margin:6px 0; }
-  header .meta { font-size:13px; color:var(--ice); }
-  nav { display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-  nav button { background:none; border:none; color:var(--ice); padding:15px 18px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; transition:all 0.2s; }
+  header .meta { font-size:13px; color:#B7BEE8; }
+  nav { display:flex; gap:4px; background:var(--navy-light); padding:0 32px; overflow-x:auto; box-shadow:0 2px 8px rgba(0,0,0,0.25); }
+  nav button { background:none; border:none; color:#9BA3D4; padding:15px 18px; font-size:13.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; transition:all 0.2s; }
   nav button:hover { color:white; background:rgba(255,255,255,0.06); }
   nav button.active { color:white; border-bottom-color:var(--gold); }
   main { padding:26px 32px; max-width:1200px; margin:0 auto; }
   .tab-content { display:none; }
   .tab-content.active { display:block; animation:fadeIn 0.35s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-  h2 { font-family:Georgia,serif; color:var(--navy); font-size:19px; margin:22px 0 12px; display:flex; align-items:center; gap:8px; }
+  h2 { font-family:Georgia,serif; color:var(--heading); font-size:19px; margin:22px 0 12px; display:flex; align-items:center; gap:8px; }
   .stat-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
-  .stat-card { background:white; border-radius:12px; box-shadow:0 3px 12px rgba(30,39,97,0.09); padding:15px 18px; flex:1; min-width:130px; border-left:4px solid var(--navy); transition:transform 0.2s; }
+  .stat-card { background:var(--card); border-radius:12px; box-shadow:0 3px 12px rgba(0,0,0,0.3); padding:15px 18px; flex:1; min-width:130px; border-left:4px solid var(--navy); transition:transform 0.2s; border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); }
   .stat-card:hover { transform:translateY(-2px); }
   .stat-card.money { border-left-color:var(--gold); }
   .stat-card.green { border-left-color:var(--green); }
   .stat-card.red { border-left-color:var(--red); }
   .stat-card.purple { border-left-color:var(--purple); }
   .stat-card .icon-tag { font-size:15px; margin-bottom:2px; }
-  .stat-card .num { font-size:23px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
-  .stat-card .label { font-size:11.5px; color:#8891A3; margin-top:3px; }
+  .stat-card .num { font-size:23px; font-weight:700; color:var(--heading); font-family:Georgia,serif; }
+  .stat-card .label { font-size:11.5px; color:var(--muted); margin-top:3px; }
   .owner-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
-  .owner-card { background:white; border-radius:12px; box-shadow:0 3px 12px rgba(30,39,97,0.09); padding:13px 17px; flex:1; min-width:150px; }
+  .owner-card { background:var(--card); border-radius:12px; box-shadow:0 3px 12px rgba(0,0,0,0.3); padding:13px 17px; flex:1; min-width:150px; border:1px solid var(--border); }
   .owner-card .initials { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--navy),var(--purple)); color:white; font-size:11px; font-weight:700; margin-bottom:6px; }
-  .owner-card .name { font-weight:700; color:var(--navy); font-size:12.5px; }
+  .owner-card .name { font-weight:700; color:var(--heading); font-size:12.5px; }
   .owner-card .count { font-size:11.5px; color:var(--slate); margin:3px 0; }
   .owner-card .arr { font-size:14px; font-weight:700; color:var(--gold); }
-  .owner-card .avg { font-size:10.5px; color:#8891A3; margin-top:2px; }
-  table { width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden; box-shadow:0 3px 12px rgba(30,39,97,0.07); font-size:12.5px; margin-bottom:18px; }
-  th { background:linear-gradient(90deg,var(--navy),#2E3A94); color:white; text-align:left; padding:9px 12px; font-size:11.5px; }
-  td { padding:7px 12px; border-bottom:1px solid var(--border); }
-  tr.total-row td { font-weight:700; background:var(--ice); color:var(--navy); }
+  .owner-card .avg { font-size:10.5px; color:var(--muted); margin-top:2px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.25); font-size:12.5px; margin-bottom:18px; border:1px solid var(--border); }
+  th { background:linear-gradient(90deg,#20255499,#2E2258); color:white; text-align:left; padding:9px 12px; font-size:11.5px; }
+  td { padding:7px 12px; border-bottom:1px solid var(--border); color:var(--slate); }
+  tr.total-row td { font-weight:700; background:rgba(224,172,79,0.12); color:var(--gold); }
   .num-cell { text-align:right; }
   .center-cell { text-align:center; }
-  .empty-state { background:white; border-radius:12px; padding:28px; text-align:center; color:#8891A3; margin-bottom:18px; }
+  .empty-state { background:var(--card); border-radius:12px; padding:28px; text-align:center; color:var(--muted); margin-bottom:18px; border:1px solid var(--border); }
   .empty-state .icon { font-size:28px; margin-bottom:6px; }
-  .badge { display:inline-block; background:var(--gold); color:white; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; margin-left:8px; }
-  .chart-card { background:white; border-radius:14px; box-shadow:0 3px 14px rgba(30,39,97,0.1); padding:20px 22px; margin-bottom:20px; position:relative; overflow:hidden; }
+  .badge { display:inline-block; background:var(--gold); color:#1A1200; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; margin-left:8px; }
+  .chart-card { background:var(--card); border-radius:14px; box-shadow:0 3px 14px rgba(0,0,0,0.35); padding:20px 22px; margin-bottom:20px; position:relative; overflow:hidden; border:1px solid var(--border); }
   .chart-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--gold),var(--navy),var(--purple)); }
   .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
   @media (max-width:800px) { .chart-row { grid-template-columns:1fr; } }
-  .progress-wrap { background:#EDEFF5; border-radius:20px; height:28px; overflow:hidden; margin:10px 0; }
-  .progress-fill { background:linear-gradient(90deg, var(--gold), #E8B85C); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:white; font-size:11.5px; font-weight:700; transition:width 0.8s ease; }
+  .progress-wrap { background:rgba(255,255,255,0.06); border-radius:20px; height:28px; overflow:hidden; margin:10px 0; }
+  .progress-fill { background:linear-gradient(90deg, var(--gold), #E8B85C); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:#1A1200; font-size:11.5px; font-weight:700; transition:width 0.8s ease; }
   .target-summary { display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; }
   .target-summary div { flex:1; min-width:120px; }
-  .target-summary .big { font-size:21px; font-weight:700; color:var(--navy); font-family:Georgia,serif; }
-  .target-summary .lbl { font-size:11px; color:#8891A3; }
-  .section-note { font-size:11.5px; color:#8891A3; font-style:italic; margin:-8px 0 16px; }
-  footer { text-align:center; padding:20px; font-size:11.5px; color:#8891A3; }
+  .target-summary .big { font-size:21px; font-weight:700; color:var(--heading); font-family:Georgia,serif; }
+  .target-summary .lbl { font-size:11px; color:var(--muted); }
+  .section-note { font-size:11.5px; color:var(--muted); font-style:italic; margin:-8px 0 16px; }
+  footer { text-align:center; padding:20px; font-size:11.5px; color:var(--muted); }
 </style>
 </head>
 <body>
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 24 Jul 2026 19:21 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 24 Jul 2026 20:00 UTC</div>
 </header>
 <nav>
   <button class="tab-btn active" data-tab="jas">🎯 JAS 2026 (Focus)</button>
@@ -132,7 +132,7 @@
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Trishun</div>
-              <div class="arr">₹54,90,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹2,00,00,000</span></div>
+              <div class="arr">₹54,90,000 <span style="font-weight:400;color:#8189B0;font-size:11px">/ ₹2,00,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:27.5%;background:var(--red);font-size:9.5px;padding-right:6px;">27%</div>
               </div>
@@ -141,7 +141,7 @@
             <div class="owner-card">
               <div class="initials">G</div>
               <div class="name">Gaurav</div>
-              <div class="arr">₹51,02,400 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹2,00,00,000</span></div>
+              <div class="arr">₹51,02,400 <span style="font-weight:400;color:#8189B0;font-size:11px">/ ₹2,00,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:25.5%;background:var(--red);font-size:9.5px;padding-right:6px;">26%</div>
               </div>
@@ -150,7 +150,7 @@
             <div class="owner-card">
               <div class="initials">V</div>
               <div class="name">Vaishak</div>
-              <div class="arr">₹16,68,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹2,00,00,000</span></div>
+              <div class="arr">₹16,68,000 <span style="font-weight:400;color:#8189B0;font-size:11px">/ ₹2,00,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:8.3%;background:var(--red);font-size:9.5px;padding-right:6px;">8%</div>
               </div>
@@ -159,7 +159,7 @@
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Tushar</div>
-              <div class="arr">₹5,34,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹2,00,00,000</span></div>
+              <div class="arr">₹5,34,000 <span style="font-weight:400;color:#8189B0;font-size:11px">/ ₹2,00,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:2.7%;background:var(--red);font-size:9.5px;padding-right:6px;">3%</div>
               </div>
@@ -425,7 +425,7 @@
   </div>
 
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 24 Jul 2026 19:21 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 24 Jul 2026 20:00 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -436,8 +436,12 @@
     });
   });
 
+  Chart.defaults.color = '#9BA3D4';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Calibri, sans-serif";
+
   const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [100000000, 15122400.0]}, "byOwner": {"labels": ["Trishun", "Gaurav", "Vaishak", "Tushar"], "values": [5490000.0, 5102400.0, 1668000.0, 534000.0], "remaining": [14510000.0, 14897600.0, 18332000.0, 19466000.0], "pcts": [27.5, 25.5, 8.3, 2.7], "target": 20000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [424, 100, 36, 79, 144], "pcts": [54.2, 12.8, 4.6, 10.1, 18.4]}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done"], "values": [26700000.0, 41218200.0, 40294200.0], "weighted": [1335000.0, 6182730.0, 12088260.0]}};
-  const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
+  const NAVY = '#7B8FFF', GOLD = '#E0AC4F', ICE = '#3A4488', SLATE = '#C4CAE4', GREEN='#4ECB4E', RED='#F0716D', PURPLE='#B39CF0';
 
   new Chart(document.getElementById('targetChart'), {
     type: 'bar',
@@ -453,8 +457,8 @@
     data: {
       labels: CHART_DATA.byOwner.labels,
       datasets: [
-        { label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: {topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}, stack: 's' },
-        { label: 'Remaining to ₹2Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}, stack: 's' }
+        { label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#6E9BE0'], borderRadius: {topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}, stack: 's' },
+        { label: 'Remaining to ₹2Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: {topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}, stack: 's' }
       ]
     },
     options: {
@@ -489,7 +493,7 @@
           if (!bar) return;
           const pct = CHART_DATA.byOwner.pcts[i];
           ctx.save();
-          ctx.fillStyle = '#1E2761';
+          ctx.fillStyle = '#F0F2FF';
           ctx.font = 'bold 11px -apple-system, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
@@ -500,7 +504,7 @@
     }]
   });
 
-  const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
+  const leadColors = [RED, '#8189B0', GOLD, '#4E5488', GREEN];
   const leadTooltip = {
     callbacks: {
       label: (ctx) => {
