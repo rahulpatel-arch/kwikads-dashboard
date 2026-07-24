@@ -37,6 +37,7 @@ QUARTER_MONTHS = {
 FOCUS_QUARTER = "JAS"
 FOCUS_YEAR = 2026
 JAS_TARGET = 10_00_00_000  # Rs 10 Cr
+INDIVIDUAL_TARGET = 2_00_00_000  # Rs 2 Cr per rep, JAS quarter
 
 # Weighted active pipeline conversion assumptions
 STAGE_WEIGHTS = {
@@ -302,6 +303,25 @@ def build_dashboard():
             </div>"""
         return html
 
+    def render_achievement_target_cards(owner_totals, target):
+        html = ""
+        for owner, (count, arr) in sorted(owner_totals.items(), key=lambda x: -x[1][1]):
+            initials = "".join(w[0] for w in owner.split()[:2]).upper()
+            pct_of_target = min(arr / target * 100, 100) if target else 0
+            gap = max(target - arr, 0)
+            bar_color = "var(--green)" if pct_of_target >= 100 else ("var(--gold)" if pct_of_target >= 50 else "var(--red)")
+            html += f"""
+            <div class="owner-card">
+              <div class="initials">{initials}</div>
+              <div class="name">{owner}</div>
+              <div class="arr">{fmt_currency(arr)} <span style="font-weight:400;color:#8891A3;font-size:11px">/ {fmt_currency(target)}</span></div>
+              <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
+                <div class="progress-fill" style="width:{pct_of_target:.1f}%;background:{bar_color};font-size:9.5px;padding-right:6px;">{pct_of_target:.0f}%</div>
+              </div>
+              <div class="avg">Gap: {fmt_currency(gap)}</div>
+            </div>"""
+        return html
+
     def render_owner_table(owner_totals, total_count, total_arr):
         html = "<table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>\n"
         for owner, (count, arr) in sorted(owner_totals.items(), key=lambda x: -x[1][1]):
@@ -395,7 +415,7 @@ def build_dashboard():
 
     chart_data_json = json.dumps({
         "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
-        "byOwner": {"labels": achievement_labels, "values": achievement_values},
+        "byOwner": {"labels": achievement_labels, "values": achievement_values, "target": INDIVIDUAL_TARGET},
         "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "pipelineStages": {"labels": pipeline_stage_labels, "values": pipeline_stage_values, "weighted": pipeline_weighted_values},
     })
@@ -516,7 +536,7 @@ def build_dashboard():
     </div>
 
     <div class="owner-row">
-      {render_owner_cards(achievement_owner_totals)}
+      {render_achievement_target_cards(achievement_owner_totals, INDIVIDUAL_TARGET)}
     </div>
 
     <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
@@ -615,9 +635,12 @@ def build_dashboard():
     type: 'bar',
     data: {{
       labels: CHART_DATA.byOwner.labels,
-      datasets: [{{ label: 'EARR', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: 8 }}]
+      datasets: [
+        {{ label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: 8, order: 2 }},
+        {{ label: 'Individual Target (₹2Cr)', type: 'line', data: CHART_DATA.byOwner.labels.map(() => CHART_DATA.byOwner.target), borderColor: RED, borderDash: [6,4], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }}
+      ]
     }},
-    options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
+    options: {{ plugins: {{ legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
   }});
 
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
