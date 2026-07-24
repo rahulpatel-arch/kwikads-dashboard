@@ -82,7 +82,7 @@
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 24 Jul 2026 06:32 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 24 Jul 2026 06:41 UTC</div>
 </header>
 <nav>
   <button class="tab-btn active" data-tab="jas">🎯 JAS 2026 (Focus)</button>
@@ -424,7 +424,7 @@
   </div>
 
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 24 Jul 2026 06:32 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 24 Jul 2026 06:41 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -435,7 +435,7 @@
     });
   });
 
-  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [100000000, 14552400.0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Vaishak", "Tushar"], "values": [5102400.0, 4920000.0, 1668000.0, 534000.0], "target": 20000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [396, 146, 36, 44, 139], "pcts": [52.0, 19.2, 4.7, 5.8, 18.3]}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done"], "values": [26238000.0, 39537000.0, 38161200.0], "weighted": [1311900.0, 5930550.0, 11448360.0]}};
+  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [100000000, 14552400.0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Vaishak", "Tushar"], "values": [5102400.0, 4920000.0, 1668000.0, 534000.0], "remaining": [14897600.0, 15080000.0, 18332000.0, 19466000.0], "pcts": [25.5, 24.6, 8.3, 2.7], "target": 20000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [396, 146, 36, 44, 139], "pcts": [52.0, 19.2, 4.7, 5.8, 18.3]}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done"], "values": [26238000.0, 39537000.0, 38161200.0], "weighted": [1311900.0, 5930550.0, 11448360.0]}};
   const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
 
   new Chart(document.getElementById('targetChart'), {
@@ -452,11 +452,51 @@
     data: {
       labels: CHART_DATA.byOwner.labels,
       datasets: [
-        { label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: 8, order: 2 },
-        { label: 'Individual Target (₹2Cr)', type: 'line', data: CHART_DATA.byOwner.labels.map(() => CHART_DATA.byOwner.target), borderColor: RED, borderDash: [6,4], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }
+        { label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: {topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}, stack: 's' },
+        { label: 'Remaining to ₹2Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}, stack: 's' }
       ]
     },
-    options: { plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10.5 } } } }, scales: { y: { ticks: { callback: v => '₹' + (v/100000).toFixed(0) + 'L' } } } }
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 10.5 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              if (ctx.dataset.label === 'Achieved') {
+                const pct = CHART_DATA.byOwner.pcts[ctx.dataIndex];
+                return `Achieved: ₹${(ctx.raw/100000).toFixed(1)}L (${pct}% of ₹2Cr)`;
+              }
+              return `Remaining: ₹${(ctx.raw/100000).toFixed(1)}L`;
+            }
+          }
+        },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: { stacked: true, max: CHART_DATA.byOwner.target, ticks: { callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' } },
+        y: { stacked: true }
+      }
+    },
+    plugins: [{
+      id: 'pctLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        chart.data.labels.forEach((label, i) => {
+          const meta = chart.getDatasetMeta(0);
+          const bar = meta.data[i];
+          if (!bar) return;
+          const pct = CHART_DATA.byOwner.pcts[i];
+          ctx.save();
+          ctx.fillStyle = '#1E2761';
+          ctx.font = 'bold 11px -apple-system, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pct + '%', bar.x + 8, bar.y);
+          ctx.restore();
+        });
+      }
+    }]
   });
 
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
