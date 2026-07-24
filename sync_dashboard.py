@@ -402,6 +402,8 @@ def build_dashboard():
     achievement_owner_totals = {o: v for o, v in focus_data["owner_totals"].items() if o != "Rahul"}
     achievement_labels = [o for o, _ in sorted(achievement_owner_totals.items(), key=lambda x: -x[1][1])] if achievement_owner_totals else []
     achievement_values = [achievement_owner_totals[o][1] for o in achievement_labels]
+    achievement_remaining = [max(INDIVIDUAL_TARGET - v, 0) for v in achievement_values]
+    achievement_pcts = [round(v / INDIVIDUAL_TARGET * 100, 1) if INDIVIDUAL_TARGET else 0 for v in achievement_values]
 
     lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
     lead_values = [lead_buckets.get(l, 0) for l in lead_labels]
@@ -415,7 +417,7 @@ def build_dashboard():
 
     chart_data_json = json.dumps({
         "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
-        "byOwner": {"labels": achievement_labels, "values": achievement_values, "target": INDIVIDUAL_TARGET},
+        "byOwner": {"labels": achievement_labels, "values": achievement_values, "remaining": achievement_remaining, "pcts": achievement_pcts, "target": INDIVIDUAL_TARGET},
         "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "pipelineStages": {"labels": pipeline_stage_labels, "values": pipeline_stage_values, "weighted": pipeline_weighted_values},
     })
@@ -636,11 +638,51 @@ def build_dashboard():
     data: {{
       labels: CHART_DATA.byOwner.labels,
       datasets: [
-        {{ label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: 8, order: 2 }},
-        {{ label: 'Individual Target (₹2Cr)', type: 'line', data: CHART_DATA.byOwner.labels.map(() => CHART_DATA.byOwner.target), borderColor: RED, borderDash: [6,4], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }}
+        {{ label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
+        {{ label: 'Remaining to ₹2Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
       ]
     }},
-    options: {{ plugins: {{ legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
+    options: {{
+      indexAxis: 'y',
+      plugins: {{
+        legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            label: (ctx) => {{
+              if (ctx.dataset.label === 'Achieved') {{
+                const pct = CHART_DATA.byOwner.pcts[ctx.dataIndex];
+                return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ₹2Cr)`;
+              }}
+              return `Remaining: ₹${{(ctx.raw/100000).toFixed(1)}}L`;
+            }}
+          }}
+        }},
+        datalabels: {{ display: false }}
+      }},
+      scales: {{
+        x: {{ stacked: true, max: CHART_DATA.byOwner.target, ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }},
+        y: {{ stacked: true }}
+      }}
+    }},
+    plugins: [{{
+      id: 'pctLabel',
+      afterDatasetsDraw(chart) {{
+        const {{ ctx }} = chart;
+        chart.data.labels.forEach((label, i) => {{
+          const meta = chart.getDatasetMeta(0);
+          const bar = meta.data[i];
+          if (!bar) return;
+          const pct = CHART_DATA.byOwner.pcts[i];
+          ctx.save();
+          ctx.fillStyle = '#1E2761';
+          ctx.font = 'bold 11px -apple-system, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pct + '%', bar.x + 8, bar.y);
+          ctx.restore();
+        }});
+      }}
+    }}]
   }});
 
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
