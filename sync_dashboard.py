@@ -377,13 +377,13 @@ def build_dashboard():
                 </div>"""
                 continue
             html += f"<h2>{month} {FOCUS_YEAR} Go-Live — {len(data['rows'])} Brands · {fmt_currency(data['total'])}</h2>"
-            html += "<table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>EARR</th></tr>"
+            html += "<table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr>"
             html += render_brand_rows(data["rows"])
             html += f"<tr class='total-row'><td colspan='3'>{month} Total</td><td class='num-cell'>{fmt_currency(data['total'])}</td></tr></table>"
         return html
 
     def render_quarterly_breakdown():
-        html = "<table><tr><th>Quarter</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>"
+        html = "<table><tr><th>Quarter</th><th class='center-cell'>Brands</th><th style='text-align:right'>Booked ARR</th></tr>"
         for key, data in sorted(quarter_buckets.items()):
             if not data["rows"]:
                 continue
@@ -595,7 +595,7 @@ def build_dashboard():
     </div>
 
     <div class="chart-card">
-      <h2 style="margin-top:0">💰 Kwik Ads Expected ARR — Month by Month (JAS)</h2>
+      <h2 style="margin-top:0">💰 Kwik Ads Booked ARR — Month by Month (JAS)</h2>
       <canvas id="monthlyArrChart"></canvas>
     </div>
 
@@ -636,7 +636,7 @@ def build_dashboard():
     <h2>⭐ Total Go-Live — All Time (Team Only)</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="num">{len(till_date_rows)}</div><div class="label">Total Go-Live</div></div>
-      <div class="stat-card money"><div class="num">{fmt_currency(total_earr_alltime)}</div><div class="label">Total EARR</div></div>
+      <div class="stat-card money"><div class="num">{fmt_currency(total_earr_alltime)}</div><div class="label">Total Booked ARR</div></div>
     </div>
     <div class="owner-row">
       {render_owner_cards(owner_totals_alltime)}
@@ -647,9 +647,9 @@ def build_dashboard():
 
     <h2>All Go-Live Brands — Till Date</h2>
     <table>
-      <tr><th>Brand</th><th>Owner</th><th>Go-Live Date</th><th style="text-align:right">EARR</th></tr>
+      <tr><th>Brand</th><th>Owner</th><th>Go-Live Date</th><th style="text-align:right">Booked ARR</th></tr>
       {render_brand_rows(till_date_rows)}
-      <tr class="total-row"><td colspan="3">Total EARR (Till Date)</td><td class="num-cell">{fmt_currency(total_earr_alltime)}</td></tr>
+      <tr class="total-row"><td colspan="3">Total Booked ARR (Till Date)</td><td class="num-cell">{fmt_currency(total_earr_alltime)}</td></tr>
     </table>
   </div>
 
@@ -761,7 +761,7 @@ def build_dashboard():
     type: 'bar',
     data: {{
       labels: CHART_DATA.monthlyArr.labels,
-      datasets: [{{ label: 'Kwik Ads Expected ARR', data: CHART_DATA.monthlyArr.values, backgroundColor: [GOLD, NAVY, PURPLE], borderRadius: 8 }}]
+      datasets: [{{ label: 'Kwik Ads Booked ARR', data: CHART_DATA.monthlyArr.values, backgroundColor: [GOLD, NAVY, PURPLE], borderRadius: 8 }}]
     }},
     options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
   }});
