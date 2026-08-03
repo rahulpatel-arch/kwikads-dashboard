@@ -472,8 +472,12 @@ def build_dashboard():
 
     target_progress_pct = round(min(focus_data["total"] / JAS_TARGET * 100, 100), 1) if JAS_TARGET else 0
 
+    monthly_arr_labels = ["July", "August", "September"]
+    monthly_arr_values = [focus_month_buckets.get(m, {"total": 0})["total"] for m in monthly_arr_labels]
+
     chart_data_json = json.dumps({
         "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
+        "monthlyArr": {"labels": monthly_arr_labels, "values": monthly_arr_values},
         "byOwner": {"labels": achievement_labels, "values": achievement_values, "remaining": achievement_remaining, "pcts": achievement_pcts, "target": INDIVIDUAL_TARGET},
         "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "leadFunnelByPeriod": {
@@ -585,8 +589,14 @@ def build_dashboard():
         <div><div class="big" style="color:var(--gold)">{fmt_currency(focus_data['total'])}</div><div class="lbl">Achieved So Far</div></div>
         <div><div class="big" style="color:var(--red)">{fmt_currency(max(JAS_TARGET - focus_data['total'], 0))}</div><div class="lbl">Gap Remaining</div></div>
         <div><div class="big" style="color:var(--purple)">{fmt_currency(agreement_total)}</div><div class="lbl">Agreement Signed (soon)</div></div>
+        <div><div class="big" style="color:#5B6EAE">{fmt_currency(weighted_total)}</div><div class="lbl">Weighted Pipeline (Expected)</div></div>
       </div>
       <canvas id="targetChart" height="90"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h2 style="margin-top:0">💰 Kwik Ads Expected ARR — Month by Month (JAS)</h2>
+      <canvas id="monthlyArrChart"></canvas>
     </div>
 
     <div class="stat-row">
@@ -745,6 +755,15 @@ def build_dashboard():
       datasets: [{{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD], borderRadius: 8 }}]
     }},
     options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
+  }});
+
+  new Chart(document.getElementById('monthlyArrChart'), {{
+    type: 'bar',
+    data: {{
+      labels: CHART_DATA.monthlyArr.labels,
+      datasets: [{{ label: 'Kwik Ads Expected ARR', data: CHART_DATA.monthlyArr.values, backgroundColor: [GOLD, NAVY, PURPLE], borderRadius: 8 }}]
+    }},
+    options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
   }});
 
   new Chart(document.getElementById('ownerChart'), {{
