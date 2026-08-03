@@ -476,8 +476,10 @@ def build_dashboard():
     monthly_arr_values = [focus_month_buckets.get(m, {"total": 0})["total"] for m in monthly_arr_labels]
 
     chart_data_json = json.dumps({
-        "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far"], "values": [JAS_TARGET, focus_data["total"]]},
-        "monthlyArr": {"labels": monthly_arr_labels, "values": monthly_arr_values},
+        "targetVsAchieved": {
+            "labels": ["JAS Target", "Achieved So Far"] + monthly_arr_labels,
+            "values": [JAS_TARGET, focus_data["total"]] + monthly_arr_values,
+        },
         "byOwner": {"labels": achievement_labels, "values": achievement_values, "remaining": achievement_remaining, "pcts": achievement_pcts, "target": INDIVIDUAL_TARGET},
         "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
         "leadFunnelByPeriod": {
@@ -591,12 +593,7 @@ def build_dashboard():
         <div><div class="big" style="color:var(--purple)">{fmt_currency(agreement_total)}</div><div class="lbl">Agreement Signed (soon)</div></div>
         <div><div class="big" style="color:#5B6EAE">{fmt_currency(weighted_total)}</div><div class="lbl">Weighted Pipeline (Expected)</div></div>
       </div>
-      <canvas id="targetChart" height="90"></canvas>
-    </div>
-
-    <div class="chart-card">
-      <h2 style="margin-top:0">💰 Kwik Ads Booked ARR — Month by Month (JAS)</h2>
-      <canvas id="monthlyArrChart"></canvas>
+      <canvas id="targetChart" height="140"></canvas>
     </div>
 
     <div class="stat-row">
@@ -752,18 +749,9 @@ def build_dashboard():
     type: 'bar',
     data: {{
       labels: CHART_DATA.targetVsAchieved.labels,
-      datasets: [{{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD], borderRadius: 8 }}]
+      datasets: [{{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD, '#8891A3', NAVY, PURPLE], borderRadius: 8 }}]
     }},
     options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
-  }});
-
-  new Chart(document.getElementById('monthlyArrChart'), {{
-    type: 'bar',
-    data: {{
-      labels: CHART_DATA.monthlyArr.labels,
-      datasets: [{{ label: 'Kwik Ads Booked ARR', data: CHART_DATA.monthlyArr.values, backgroundColor: [GOLD, NAVY, PURPLE], borderRadius: 8 }}]
-    }},
-    options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
   }});
 
   new Chart(document.getElementById('ownerChart'), {{
