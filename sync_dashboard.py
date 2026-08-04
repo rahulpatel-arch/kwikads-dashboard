@@ -115,7 +115,7 @@ def build_dashboard():
 
     # ================= ALL-TIME GO-LIVE (Till Date), team only =================
     golive_q = f"""
-        SELECT Account.Name, Owner.Name, CloseDate, Kwik_Ads_Expected_ARR__c
+        SELECT Account.Name, Owner.Name, CloseDate, Booked_ARR_Cr__c
         FROM Opportunity
         WHERE RecordType.Name = 'Kwik Ads'
           AND StageName = 'Go-Live'
@@ -134,7 +134,8 @@ def build_dashboard():
         owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
         if owner is None:
             continue
-        arr = r.get("Kwik_Ads_Expected_ARR__c") or 0
+        # Booked_ARR_Cr__c is stored in Crores (e.g. 0.048 = Rs 4,80,000) — convert to rupees.
+        arr = (r.get("Booked_ARR_Cr__c") or 0) * 1_00_00_000
         close_date = r.get("CloseDate")
 
         till_date_rows.append((acct, owner, close_date, arr))
@@ -591,7 +592,6 @@ def build_dashboard():
         <div><div class="big" style="color:var(--gold)">{fmt_currency(focus_data['total'])}</div><div class="lbl">Achieved So Far</div></div>
         <div><div class="big" style="color:var(--red)">{fmt_currency(max(JAS_TARGET - focus_data['total'], 0))}</div><div class="lbl">Gap Remaining</div></div>
         <div><div class="big" style="color:var(--purple)">{fmt_currency(agreement_total)}</div><div class="lbl">Agreement Signed (soon)</div></div>
-        <div><div class="big" style="color:#5B6EAE">{fmt_currency(weighted_total)}</div><div class="lbl">Weighted Pipeline (Expected)</div></div>
       </div>
       <canvas id="targetChart" height="140"></canvas>
     </div>
