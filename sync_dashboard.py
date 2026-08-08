@@ -132,41 +132,67 @@ def bucket_lead_status(status, is_converted):
 def fetch_sf_report_summary(sf, report_id):
     """
     Pulls a Salesforce Report's results via the Analytics REST API and tries to
-    extract a simple (label, value) breakdown for display. Report structures vary
-    a lot (tabular / summary / matrix, single or multi-level grouping), so this is
-    intentionally defensive: on ANY unexpected shape it returns None rather than
-    raising, so a report we can't parse just falls back to a plain link card
-    instead of breaking the whole sync.
+    extract a display-ready breakdown. Handles three shapes:
+      - Matrix reports (groupingsDown AND groupingsAcross, e.g. Owner x Week) ->
+        a full 2D table, since collapsing either axis away loses the point of
+        a "week-on-week" report.
+      - Single-grouped reports (groupingsDown only) -> a simple label/value list.
+      - Ungrouped tabular reports -> just the grand total.
+    Intentionally defensive: on ANY unexpected shape, returns None so the caller
+    falls back to a plain link card instead of breaking the whole sync.
     """
     try:
         data = sf.restful(f"analytics/reports/{report_id}")
         report_name = data.get("reportMetadata", {}).get("name", report_id)
         fact_map = data.get("factMap", {})
         groupings_down = data.get("groupingsDown", {}).get("groupings", [])
-
-        rows = []
-        if groupings_down:
-            # Grouped report: one row per top-level group, using its subtotal.
-            for i, g in enumerate(groupings_down):
-                key = f"{i}!T"
-                agg = fact_map.get(key, {}).get("aggregates", [])
-                value = agg[0].get("label") if agg else None
-                if value is not None:
-                    rows.append((g.get("label", f"Group {i}"), value))
-        else:
-            # Ungrouped tabular report: just take the grand total row count/aggregate if present.
-            grand = fact_map.get("T!T", {})
-            agg = grand.get("aggregates", [])
-            if agg:
-                rows.append(("Grand Total", agg[0].get("label")))
+        groupings_across = data.get("groupingsAcross", {}).get("groupings", [])
 
         grand_total_agg = fact_map.get("T!T", {}).get("aggregates", [])
         grand_total = grand_total_agg[0].get("label") if grand_total_agg else None
 
-        if not rows and grand_total is None:
-            return None  # nothing usable extracted — caller will show a plain link instead
+        # ---- Matrix report: e.g. Owner (down) x Week (across) ----
+        if groupings_down and groupings_across:
+            across_labels = [g.get("label", f"Col {j}") for j, g in enumerate(groupings_across)]
+            matrix_rows = []
+            for i, g in enumerate(groupings_down):
+                row_label = g.get("label", f"Row {i}")
+                row_values = []
+                for j in range(len(groupings_across)):
+                    cell = fact_map.get(f"{i}!{j}", {}).get("aggregates", [])
+                    row_values.append(cell[0].get("label") if cell else "-")
+                matrix_rows.append((row_label, row_values))
+            if not matrix_rows:
+                return None
+            return {
+                "name": report_name,
+                "is_matrix": True,
+                "across_labels": across_labels[:12],  # cap columns so the card stays readable
+                "matrix_rows": [(label, vals[:12]) for label, vals in matrix_rows],
+                "grand_total": grand_total,
+            }
 
-        return {"name": report_name, "rows": rows[:8], "grand_total": grand_total}
+        # ---- Single-grouped report (one axis only) ----
+        rows = []
+        if groupings_down:
+            for i, g in enumerate(groupings_down):
+                agg = fact_map.get(f"{i}!T", {}).get("aggregates", [])
+                value = agg[0].get("label") if agg else None
+                if value is not None:
+                    rows.append((g.get("label", f"Group {i}"), value))
+        elif groupings_across:
+            for j, g in enumerate(groupings_across):
+                agg = fact_map.get(f"T!{j}", {}).get("aggregates", [])
+                value = agg[0].get("label") if agg else None
+                if value is not None:
+                    rows.append((g.get("label", f"Group {j}"), value))
+        elif grand_total is not None:
+            rows.append(("Grand Total", grand_total))
+
+        if not rows and grand_total is None:
+            return None
+
+        return {"name": report_name, "is_matrix": False, "rows": rows[:12], "grand_total": grand_total}
     except Exception as e:
         print(f"  (Report {report_id} preview unavailable: {e})")
         return None
@@ -503,12 +529,18 @@ def build_dashboard():
         html = ""
         for rpt in previews:
             summary = rpt["summary"]
-            html += '<div class="chart-card">'
-            html += f'<h2 style="margin-top:0;font-size:15px">{rpt["name"]}</h2>'
+            html += '<div class="chart-card" style="margin-bottom:20px;overflow-x:auto;">'
+            html += f'<h2 style="margin-top:0;font-size:16px">{rpt["name"]}</h2>'
             if summary:
                 if summary.get("grand_total") is not None:
-                    html += f'<div class="stat-card" style="margin-bottom:12px"><div class="num">{summary["grand_total"]}</div><div class="label">Grand Total</div></div>'
-                if summary["rows"]:
+                    html += f'<div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">{summary["grand_total"]}</div><div class="label">Grand Total</div></div>'
+                if summary.get("is_matrix"):
+                    across = summary["across_labels"]
+                    html += "<table><tr><th>Owner</th>" + "".join(f"<th class='center-cell'>{c}</th>" for c in across) + "</tr>"
+                    for row_label, values in summary["matrix_rows"]:
+                        html += f"<tr><td>{row_label}</td>" + "".join(f"<td class='center-cell'>{v}</td>" for v in values) + "</tr>"
+                    html += "</table>"
+                elif summary.get("rows"):
                     html += "<table><tr><th>Group</th><th style='text-align:right'>Value</th></tr>"
                     for label, value in summary["rows"]:
                         html += f"<tr><td>{label}</td><td class='num-cell'>{value}</td></tr>"
@@ -813,9 +845,7 @@ def build_dashboard():
   <div class="tab-content" id="sfreports">
     <h2>📁 Salesforce Reports</h2>
     <p class="section-note">Live previews pulled via the Salesforce Reports API where the report structure allows it. If a preview isn't available, use the link to open the report directly in Salesforce.</p>
-    <div class="chart-row" style="grid-template-columns:1fr 1fr 1fr;">
-      {render_sf_report_cards(report_previews)}
-    </div>
+    {render_sf_report_cards(report_previews)}
   </div>
 
 </main>
