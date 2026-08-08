@@ -47,6 +47,7 @@ SF_REPORTS = [
         "id": "00Ofu000009AWSrEAO",
         "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AWSrEAO/view?queryScope=userFolders",
         "use_count": False,
+        "exclude_owners": ["Rahul Patel"],
     },
     {
         "name": "WoW Pitch JAS'26",
@@ -132,7 +133,34 @@ def bucket_lead_status(status, is_converted):
     return "Open"
 
 
-def fetch_sf_report_summary(sf, report_id, use_count=False):
+def _parse_numeric(label):
+    """Extracts a float from a formatted label like 'INR 12,828,000.00' or '45'."""
+    if label is None:
+        return None
+    cleaned = "".join(ch for ch in str(label) if ch.isdigit() or ch in ".-")
+    try:
+        return float(cleaned) if cleaned not in ("", "-", ".") else None
+    except ValueError:
+        return None
+
+
+def _format_like(original_label, new_value):
+    """Reformats new_value using the same style (currency prefix, decimals) as original_label."""
+    if original_label is None:
+        return str(new_value)
+    s = str(original_label)
+    has_decimals = "." in s
+    is_currency = any(c.isalpha() for c in s)
+    if is_currency:
+        currency_prefix = "".join(ch for ch in s if ch.isalpha() or ch == " ").strip()
+        return f"{currency_prefix} {new_value:,.2f}".strip()
+    if has_decimals:
+        return f"{new_value:,.2f}"
+    return f"{int(round(new_value))}"
+
+
+def fetch_sf_report_summary(sf, report_id, use_count=False, exclude_owners=None):
+    exclude_owners = set(exclude_owners or [])
     """
     Pulls a Salesforce Report's results via the Analytics REST API and tries to
     extract a display-ready breakdown. Handles three shapes:
@@ -175,6 +203,8 @@ def fetch_sf_report_summary(sf, report_id, use_count=False):
             matrix_rows = []
             for i, g in enumerate(groupings_down):
                 row_label = g.get("label", f"Row {i}")
+                if row_label in exclude_owners:
+                    continue  # hide this row from view; totals below are left exactly as Salesforce returns them
                 row_values = []
                 for j in range(len(groupings_across)):
                     cell = fact_map.get(f"{i}!{j}", {})
@@ -184,10 +214,12 @@ def fetch_sf_report_summary(sf, report_id, use_count=False):
                 matrix_rows.append((row_label, row_values, row_total if row_total is not None else "-"))
             if not matrix_rows:
                 return None
+
             col_totals = []
             for j in range(len(groupings_across)):
                 ct = cell_value(fact_map.get(f"T!{j}", {}))
                 col_totals.append(ct if ct is not None else "-")
+
             return {
                 "name": report_name,
                 "is_matrix": True,
@@ -201,14 +233,20 @@ def fetch_sf_report_summary(sf, report_id, use_count=False):
         rows = []
         if groupings_down:
             for i, g in enumerate(groupings_down):
+                label = g.get("label", f"Group {i}")
+                if label in exclude_owners:
+                    continue  # hide from view; grand_total below is left exactly as Salesforce returns it
                 value = cell_value(fact_map.get(f"{i}!T", {}))
                 if value is not None:
-                    rows.append((g.get("label", f"Group {i}"), value))
+                    rows.append((label, value))
         elif groupings_across:
             for j, g in enumerate(groupings_across):
+                label = g.get("label", f"Group {j}")
+                if label in exclude_owners:
+                    continue
                 value = cell_value(fact_map.get(f"T!{j}", {}))
                 if value is not None:
-                    rows.append((g.get("label", f"Group {j}"), value))
+                    rows.append((label, value))
         elif grand_total is not None:
             rows.append(("Grand Total", grand_total))
 
@@ -423,7 +461,7 @@ def build_dashboard():
     # ================= SF Reports tab: pull live previews where possible =================
     report_previews = []
     for rpt in SF_REPORTS:
-        summary = fetch_sf_report_summary(sf, rpt["id"], use_count=rpt.get("use_count", False))
+        summary = fetch_sf_report_summary(sf, rpt["id"], use_count=rpt.get("use_count", False), exclude_owners=rpt.get("exclude_owners"))
         report_previews.append({**rpt, "summary": summary})
 
     generated_at = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
