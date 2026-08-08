@@ -180,14 +180,20 @@ def fetch_sf_report_summary(sf, report_id, use_count=False):
                     cell = fact_map.get(f"{i}!{j}", {})
                     v = cell_value(cell)
                     row_values.append(v if v is not None else "-")
-                matrix_rows.append((row_label, row_values))
+                row_total = cell_value(fact_map.get(f"{i}!T", {}))
+                matrix_rows.append((row_label, row_values, row_total if row_total is not None else "-"))
             if not matrix_rows:
                 return None
+            col_totals = []
+            for j in range(len(groupings_across)):
+                ct = cell_value(fact_map.get(f"T!{j}", {}))
+                col_totals.append(ct if ct is not None else "-")
             return {
                 "name": report_name,
                 "is_matrix": True,
                 "across_labels": across_labels[:12],  # cap columns so the card stays readable
-                "matrix_rows": [(label, vals[:12]) for label, vals in matrix_rows],
+                "matrix_rows": [(label, vals[:12], total) for label, vals, total in matrix_rows],
+                "col_totals": col_totals[:12],
                 "grand_total": grand_total,
             }
 
@@ -553,9 +559,11 @@ def build_dashboard():
                     html += f'<div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">{summary["grand_total"]}</div><div class="label">Grand Total</div></div>'
                 if summary.get("is_matrix"):
                     across = summary["across_labels"]
-                    html += "<table><tr><th>Owner</th>" + "".join(f"<th class='center-cell'>{c}</th>" for c in across) + "</tr>"
-                    for row_label, values in summary["matrix_rows"]:
-                        html += f"<tr><td>{row_label}</td>" + "".join(f"<td class='center-cell'>{v}</td>" for v in values) + "</tr>"
+                    html += "<table><tr><th>Owner</th>" + "".join(f"<th class='center-cell'>{c}</th>" for c in across) + "<th class='center-cell'>Total</th></tr>"
+                    for row_label, values, row_total in summary["matrix_rows"]:
+                        html += f"<tr><td>{row_label}</td>" + "".join(f"<td class='center-cell'>{v}</td>" for v in values) + f"<td class='center-cell' style='font-weight:700'>{row_total}</td></tr>"
+                    if summary.get("col_totals"):
+                        html += "<tr class='total-row'><td>Total</td>" + "".join(f"<td class='center-cell'>{v}</td>" for v in summary["col_totals"]) + f"<td class='center-cell'>{summary.get('grand_total','-')}</td></tr>"
                     html += "</table>"
                 elif summary.get("rows"):
                     html += "<table><tr><th>Group</th><th style='text-align:right'>Value</th></tr>"
