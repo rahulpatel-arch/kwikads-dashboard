@@ -46,16 +46,19 @@ SF_REPORTS = [
         "name": "Opp Funnel JAS'26",
         "id": "00Ofu000009AWSrEAO",
         "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AWSrEAO/view?queryScope=userFolders",
+        "use_count": False,
     },
     {
         "name": "WoW Pitch JAS'26",
         "id": "00Ofu000009AW6HEAW",
         "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AW6HEAW/view?queryScope=userFolders",
+        "use_count": True,  # show count of pitches, not Sum of Amount
     },
     {
         "name": "JAS'26 Lead Funnel",
         "id": "00Ofu000009AUywEAG",
         "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AUywEAG/view?queryScope=userFolders",
+        "use_count": False,
     },
 ]
 
@@ -129,7 +132,7 @@ def bucket_lead_status(status, is_converted):
     return "Open"
 
 
-def fetch_sf_report_summary(sf, report_id):
+def fetch_sf_report_summary(sf, report_id, use_count=False):
     """
     Pulls a Salesforce Report's results via the Analytics REST API and tries to
     extract a display-ready breakdown. Handles three shapes:
@@ -138,9 +141,21 @@ def fetch_sf_report_summary(sf, report_id):
         a "week-on-week" report.
       - Single-grouped reports (groupingsDown only) -> a simple label/value list.
       - Ungrouped tabular reports -> just the grand total.
+
+    use_count: when True, shows each cell's rowCount (the number of underlying
+    records) instead of its configured summary aggregate (e.g. Sum of Amount).
+    rowCount is tracked by Salesforce independently of which summary field the
+    report happens to have configured, so this works regardless of report setup.
+
     Intentionally defensive: on ANY unexpected shape, returns None so the caller
     falls back to a plain link card instead of breaking the whole sync.
     """
+    def cell_value(cell):
+        if use_count:
+            return cell.get("rowCount")
+        agg = cell.get("aggregates", [])
+        return agg[0].get("label") if agg else None
+
     try:
         data = sf.restful(f"analytics/reports/{report_id}")
         report_name = data.get("reportMetadata", {}).get("name", report_id)
@@ -148,8 +163,7 @@ def fetch_sf_report_summary(sf, report_id):
         groupings_down = data.get("groupingsDown", {}).get("groupings", [])
         groupings_across = data.get("groupingsAcross", {}).get("groupings", [])
 
-        grand_total_agg = fact_map.get("T!T", {}).get("aggregates", [])
-        grand_total = grand_total_agg[0].get("label") if grand_total_agg else None
+        grand_total = cell_value(fact_map.get("T!T", {}))
 
         # ---- Matrix report: e.g. Owner (down) x Week (across) ----
         if groupings_down and groupings_across:
@@ -159,8 +173,9 @@ def fetch_sf_report_summary(sf, report_id):
                 row_label = g.get("label", f"Row {i}")
                 row_values = []
                 for j in range(len(groupings_across)):
-                    cell = fact_map.get(f"{i}!{j}", {}).get("aggregates", [])
-                    row_values.append(cell[0].get("label") if cell else "-")
+                    cell = fact_map.get(f"{i}!{j}", {})
+                    v = cell_value(cell)
+                    row_values.append(v if v is not None else "-")
                 matrix_rows.append((row_label, row_values))
             if not matrix_rows:
                 return None
@@ -176,14 +191,12 @@ def fetch_sf_report_summary(sf, report_id):
         rows = []
         if groupings_down:
             for i, g in enumerate(groupings_down):
-                agg = fact_map.get(f"{i}!T", {}).get("aggregates", [])
-                value = agg[0].get("label") if agg else None
+                value = cell_value(fact_map.get(f"{i}!T", {}))
                 if value is not None:
                     rows.append((g.get("label", f"Group {i}"), value))
         elif groupings_across:
             for j, g in enumerate(groupings_across):
-                agg = fact_map.get(f"T!{j}", {}).get("aggregates", [])
-                value = agg[0].get("label") if agg else None
+                value = cell_value(fact_map.get(f"T!{j}", {}))
                 if value is not None:
                     rows.append((g.get("label", f"Group {j}"), value))
         elif grand_total is not None:
@@ -400,7 +413,7 @@ def build_dashboard():
     # ================= SF Reports tab: pull live previews where possible =================
     report_previews = []
     for rpt in SF_REPORTS:
-        summary = fetch_sf_report_summary(sf, rpt["id"])
+        summary = fetch_sf_report_summary(sf, rpt["id"], use_count=rpt.get("use_count", False))
         report_previews.append({**rpt, "summary": summary})
 
     generated_at = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
