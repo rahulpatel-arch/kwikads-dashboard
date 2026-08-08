@@ -151,9 +151,13 @@ def fetch_sf_report_summary(sf, report_id, use_count=False):
     falls back to a plain link card instead of breaking the whole sync.
     """
     def cell_value(cell):
-        if use_count:
-            return cell.get("rowCount")
         agg = cell.get("aggregates", [])
+        if use_count:
+            # The report has TWO summary aggregates per cell (e.g. Sum of Booked ARR,
+            # then Record Count) — count is the second one, not a separate rowCount field.
+            if len(agg) > 1:
+                return agg[1].get("label")
+            return cell.get("rowCount")  # fallback for reports that only expose rowCount
         return agg[0].get("label") if agg else None
 
     try:
