@@ -92,13 +92,14 @@
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 08 Aug 2026 04:09 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 08 Aug 2026 04:12 UTC</div>
 </header>
 <nav>
   <button class="tab-btn active" data-tab="jas">🎯 JAS 2026 (Focus)</button>
   <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
+  <button class="tab-btn" data-tab="sfreports">📁 SF Reports</button>
 </nav>
 <main>
 
@@ -528,8 +529,16 @@
     <p class="section-note">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off. Months with no leads yet will show all zeros.</p>
   </div>
 
+  <div class="tab-content" id="sfreports">
+    <h2>📁 Salesforce Reports</h2>
+    <p class="section-note">Live previews pulled via the Salesforce Reports API where the report structure allows it. If a preview isn't available, use the link to open the report directly in Salesforce.</p>
+    <div class="chart-row" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="chart-card"><h2 style="margin-top:0;font-size:15px">Opp Funnel JAS'26</h2><div class="stat-card" style="margin-bottom:12px"><div class="num">INR 222,392,520.00</div><div class="label">Grand Total</div></div><table><tr><th>Group</th><th style='text-align:right'>Value</th></tr><tr><td>gaurav1 Panchal</td><td class='num-cell'>INR 67,435,320.00</td></tr><tr><td>Rahul Patel</td><td class='num-cell'>INR 38,160,000.00</td></tr><tr><td>Trishun Tripathi</td><td class='num-cell'>INR 47,635,200.00</td></tr><tr><td>Tushar Joshi</td><td class='num-cell'>INR 28,332,000.00</td></tr><tr><td>Vaishak Mohan</td><td class='num-cell'>INR 40,830,000.00</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AWSrEAO/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card"><h2 style="margin-top:0;font-size:15px">WoW Pitch JAS'26</h2><div class="stat-card" style="margin-bottom:12px"><div class="num">INR 97,970,520.00</div><div class="label">Grand Total</div></div><table><tr><th>Group</th><th style='text-align:right'>Value</th></tr><tr><td>gaurav1 Panchal</td><td class='num-cell'>INR 21,871,920.00</td></tr><tr><td>Rahul Patel</td><td class='num-cell'>INR 12,828,000.00</td></tr><tr><td>Trishun Tripathi</td><td class='num-cell'>INR 23,940,600.00</td></tr><tr><td>Tushar Joshi</td><td class='num-cell'>INR 23,220,000.00</td></tr><tr><td>Vaishak Mohan</td><td class='num-cell'>INR 16,110,000.00</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AW6HEAW/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card"><h2 style="margin-top:0;font-size:15px">JAS'26 Lead Funnel</h2><div class="stat-card" style="margin-bottom:12px"><div class="num">859</div><div class="label">Grand Total</div></div><table><tr><th>Group</th><th style='text-align:right'>Value</th></tr><tr><td>gaurav1 Panchal</td><td class='num-cell'>195</td></tr><tr><td>Rahul Patel</td><td class='num-cell'>121</td></tr><tr><td>Trishun Tripathi</td><td class='num-cell'>199</td></tr><tr><td>Tushar Joshi</td><td class='num-cell'>170</td></tr><tr><td>Vaishak Mohan</td><td class='num-cell'>174</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AUywEAG/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div>
+    </div>
+  </div>
+
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 08 Aug 2026 04:09 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 08 Aug 2026 04:12 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.leadtab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
