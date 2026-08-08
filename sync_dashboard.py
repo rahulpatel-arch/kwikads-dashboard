@@ -39,6 +39,26 @@ FOCUS_YEAR = 2026
 JAS_TARGET = 10_00_00_000  # Rs 10 Cr
 INDIVIDUAL_TARGET = 2_00_00_000  # Rs 2 Cr per rep, JAS quarter
 
+# Salesforce Reports to surface on the "SF Reports" tab.
+# id = the 18-char Report Id from the Lightning URL; url = the full link to open it in SF.
+SF_REPORTS = [
+    {
+        "name": "Opp Funnel JAS'26",
+        "id": "00Ofu000009AWSrEAO",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AWSrEAO/view?queryScope=userFolders",
+    },
+    {
+        "name": "WoW Pitch JAS'26",
+        "id": "00Ofu000009AW6HEAW",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AW6HEAW/view?queryScope=userFolders",
+    },
+    {
+        "name": "JAS'26 Lead Funnel",
+        "id": "00Ofu000009AUywEAG",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AUywEAG/view?queryScope=userFolders",
+    },
+]
+
 # Weighted active pipeline conversion assumptions
 STAGE_WEIGHTS = {
     "Pitch": 0.05,
@@ -107,6 +127,49 @@ def bucket_lead_status(status, is_converted):
     if "contact" in s or "pitch" in s:
         return "Contacted"
     return "Open"
+
+
+def fetch_sf_report_summary(sf, report_id):
+    """
+    Pulls a Salesforce Report's results via the Analytics REST API and tries to
+    extract a simple (label, value) breakdown for display. Report structures vary
+    a lot (tabular / summary / matrix, single or multi-level grouping), so this is
+    intentionally defensive: on ANY unexpected shape it returns None rather than
+    raising, so a report we can't parse just falls back to a plain link card
+    instead of breaking the whole sync.
+    """
+    try:
+        data = sf.restful(f"analytics/reports/{report_id}")
+        report_name = data.get("reportMetadata", {}).get("name", report_id)
+        fact_map = data.get("factMap", {})
+        groupings_down = data.get("groupingsDown", {}).get("groupings", [])
+
+        rows = []
+        if groupings_down:
+            # Grouped report: one row per top-level group, using its subtotal.
+            for i, g in enumerate(groupings_down):
+                key = f"{i}!T"
+                agg = fact_map.get(key, {}).get("aggregates", [])
+                value = agg[0].get("label") if agg else None
+                if value is not None:
+                    rows.append((g.get("label", f"Group {i}"), value))
+        else:
+            # Ungrouped tabular report: just take the grand total row count/aggregate if present.
+            grand = fact_map.get("T!T", {})
+            agg = grand.get("aggregates", [])
+            if agg:
+                rows.append(("Grand Total", agg[0].get("label")))
+
+        grand_total_agg = fact_map.get("T!T", {}).get("aggregates", [])
+        grand_total = grand_total_agg[0].get("label") if grand_total_agg else None
+
+        if not rows and grand_total is None:
+            return None  # nothing usable extracted — caller will show a plain link instead
+
+        return {"name": report_name, "rows": rows[:8], "grand_total": grand_total}
+    except Exception as e:
+        print(f"  (Report {report_id} preview unavailable: {e})")
+        return None
 
 
 def build_dashboard():
@@ -308,6 +371,12 @@ def build_dashboard():
     def pct_of(n, total):
         return f"{(n/total*100):.1f}%" if total else "0%"
 
+    # ================= SF Reports tab: pull live previews where possible =================
+    report_previews = []
+    for rpt in SF_REPORTS:
+        summary = fetch_sf_report_summary(sf, rpt["id"])
+        report_previews.append({**rpt, "summary": summary})
+
     generated_at = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
 
     # Chart.js is embedded inline (not loaded from a CDN) so the dashboard
@@ -428,6 +497,26 @@ def build_dashboard():
         html += "<tr class='total-row'><td>Team Total</td>" + f"<td class='center-cell'>{total}</td>" + "".join(f"<td class='center-cell'>{buckets.get(c,0)}</td>" for c in cols[1:]) + "</tr>"
         html += "<tr><td><i>% of Total</i></td><td class='center-cell'>100%</td>" + "".join(f"<td class='center-cell'>{pct_of(buckets.get(c,0), total)}</td>" for c in cols[1:]) + "</tr>"
         html += "</table>"
+        return html
+
+    def render_sf_report_cards(previews):
+        html = ""
+        for rpt in previews:
+            summary = rpt["summary"]
+            html += '<div class="chart-card">'
+            html += f'<h2 style="margin-top:0;font-size:15px">{rpt["name"]}</h2>'
+            if summary:
+                if summary.get("grand_total") is not None:
+                    html += f'<div class="stat-card" style="margin-bottom:12px"><div class="num">{summary["grand_total"]}</div><div class="label">Grand Total</div></div>'
+                if summary["rows"]:
+                    html += "<table><tr><th>Group</th><th style='text-align:right'>Value</th></tr>"
+                    for label, value in summary["rows"]:
+                        html += f"<tr><td>{label}</td><td class='num-cell'>{value}</td></tr>"
+                    html += "</table>"
+            else:
+                html += '<div class="empty-state" style="padding:16px;margin-bottom:12px"><div class="icon">🔗</div><b>Live preview unavailable</b><p style="margin:4px 0 0;font-size:11px">This report\'s structure couldn\'t be auto-parsed — open it directly in Salesforce.</p></div>'
+            html += f'<a href="{rpt["url"]}" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a>'
+            html += '</div>'
         return html
 
     def render_pipeline_stage_table():
@@ -577,6 +666,7 @@ def build_dashboard():
   <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
+  <button class="tab-btn" data-tab="sfreports">📁 SF Reports</button>
 </nav>
 <main>
 
@@ -718,6 +808,14 @@ def build_dashboard():
     </div>
 
     <p class="section-note">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off. Months with no leads yet will show all zeros.</p>
+  </div>
+
+  <div class="tab-content" id="sfreports">
+    <h2>📁 Salesforce Reports</h2>
+    <p class="section-note">Live previews pulled via the Salesforce Reports API where the report structure allows it. If a preview isn't available, use the link to open the report directly in Salesforce.</p>
+    <div class="chart-row" style="grid-template-columns:1fr 1fr 1fr;">
+      {render_sf_report_cards(report_previews)}
+    </div>
   </div>
 
 </main>
