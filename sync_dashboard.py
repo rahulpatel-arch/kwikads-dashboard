@@ -3,7 +3,7 @@
 sync_dashboard.py
 Pulls live KwikAds data from Salesforce (filtered to Rahul's team only) and
 regenerates index.html for the GitHub Pages dashboard: JAS quarter focus,
-Target vs Achievement (8 Cr goal), Agreement Signed pipeline, weighted
+Target vs Achievement (7.2 Cr goal), Agreement Signed pipeline, weighted
 active pipeline (Pitch 5% / Pre Audit 15% / Audit Done 30%), average ticket
 size, per-rep MQL lead funnel, and Till Date with quarterly segregation.
 Runs on a schedule via GitHub Actions.
@@ -36,8 +36,8 @@ QUARTER_MONTHS = {
 }
 FOCUS_QUARTER = "JAS"
 FOCUS_YEAR = 2026
-JAS_TARGET = 10_00_00_000  # Rs 10 Cr
-INDIVIDUAL_TARGET = 2_00_00_000  # Rs 2 Cr per rep, JAS quarter
+JAS_TARGET = 7_20_00_000  # Rs 7.2 Cr
+INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
 
 # Salesforce Reports to surface on the "SF Reports" tab.
 # id = the 18-char Report Id from the Lightning URL; url = the full link to open it in SF.
@@ -951,7 +951,7 @@ def build_dashboard():
       labels: CHART_DATA.byOwner.labels,
       datasets: [
         {{ label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
-        {{ label: 'Remaining to ₹2Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
+        {{ label: 'Remaining to ₹1.8Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
       ]
     }},
     options: {{
@@ -963,7 +963,7 @@ def build_dashboard():
             label: (ctx) => {{
               if (ctx.dataset.label === 'Achieved') {{
                 const pct = CHART_DATA.byOwner.pcts[ctx.dataIndex];
-                return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ₹2Cr)`;
+                return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ₹1.8Cr)`;
               }}
               return `Remaining: ₹${{(ctx.raw/100000).toFixed(1)}}L`;
             }}
@@ -1042,7 +1042,7 @@ def build_dashboard():
         {{ label: 'Weighted Value', data: CHART_DATA.pipelineStages.weighted, backgroundColor: PURPLE, borderRadius: 8 }}
       ]
     }},
-    options: {{ plugins: {{ legend: {{ position: 'bottom' }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }} }}
+    options: {{ plugins: {{ legend: {{ position: 'bottom' }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'Cr' }} }} }} }}
   }});
 </script>
 </body>
