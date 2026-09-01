@@ -92,7 +92,7 @@
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 31 Aug 2026 20:38 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 01 Sep 2026 00:22 UTC</div>
 </header>
 <nav>
   <button class="tab-btn active" data-tab="jas">🎯 JAS 2026 (Focus)</button>
@@ -121,9 +121,9 @@
 
     <div class="stat-row">
       <div class="stat-card"><div class="icon-tag">🏆</div><div class="num">47</div><div class="label">Total Go-Live (JAS)</div></div>
-      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">233</div><div class="label">Pitches (August)</div></div>
-      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">96</div><div class="label">Audits Done (August)</div></div>
-      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">19.8%</div><div class="label">Audit → Go-Live Conv.</div></div>
+      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">0</div><div class="label">Pitches (September)</div></div>
+      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">0</div><div class="label">Audits Done (September)</div></div>
+      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">0.0%</div><div class="label">Audit → Go-Live Conv.</div></div>
       <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">₹6,02,745</div><div class="label">Avg Ticket Size (JAS)</div></div>
     </div>
 
@@ -133,7 +133,7 @@
         <canvas id="ownerChart"></canvas>
       </div>
       <div class="chart-card">
-        <h2 style="margin-top:0">MQL Lead Funnel — August</h2>
+        <h2 style="margin-top:0">MQL Lead Funnel — September</h2>
         <canvas id="leadChart"></canvas>
       </div>
     </div>
@@ -559,7 +559,7 @@
   </div>
 
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 31 Aug 2026 20:38 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 01 Sep 2026 00:22 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.leadtab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -580,7 +580,7 @@
 
   Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Calibri, sans-serif";
 
-  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far", "July", "August", "September"], "values": [72000000, 28329000.0, 17222000.0, 11107000.0, 0]}, "byOwner": {"labels": ["Trishun", "Gaurav", "Tushar", "Vaishak"], "values": [9607000.0, 8450000.0, 4068000.0, 3876000.0], "remaining": [8393000.0, 9550000.0, 13932000.0, 14124000.0], "pcts": [53.4, 46.9, 22.6, 21.5], "target": 18000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [352, 444, 16, 27, 154], "pcts": [35.4, 44.7, 1.6, 2.7, 15.5]}, "leadFunnelByPeriod": {"QDR": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [981, 481, 31, 118, 377]}, "July": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [629, 37, 15, 91, 223]}, "August": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [352, 444, 16, 27, 154]}, "September": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"], "values": [32160000.0, 35256000.0, 34293600.0, 0], "weighted": [1608000.0, 5288400.0, 10288080.0, 0.0]}};
+  const CHART_DATA = {"targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far", "July", "August", "September"], "values": [72000000, 28329000.0, 17222000.0, 11107000.0, 0]}, "byOwner": {"labels": ["Trishun", "Gaurav", "Tushar", "Vaishak"], "values": [9607000.0, 8450000.0, 4068000.0, 3876000.0], "remaining": [8393000.0, 9550000.0, 13932000.0, 14124000.0], "pcts": [53.4, 46.9, 22.6, 21.5], "target": 18000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0], "pcts": [0, 0, 0, 0, 0]}, "leadFunnelByPeriod": {"QDR": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [981, 481, 31, 118, 377]}, "July": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [629, 37, 15, 91, 223]}, "August": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [352, 444, 16, 27, 154]}, "September": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"], "values": [32160000.0, 35256000.0, 34293600.0, 0], "weighted": [1608000.0, 5288400.0, 10288080.0, 0.0]}};
   const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
 
   new Chart(document.getElementById('targetChart'), {
