@@ -15,6 +15,7 @@ Required environment variables (GitHub Secrets):
 import os
 import sys
 import json
+import math
 from datetime import datetime, date
 from collections import defaultdict
 from simple_salesforce import Salesforce
@@ -37,10 +38,17 @@ QUARTER_MONTHS = {
 FOCUS_YEAR = 2026
 JAS_TARGET = 7_20_00_000  # Rs 7.2 Cr
 INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
-# OND 2026 targets. ASSUMPTION: Rs 7 Cr team target (the number being chased), split across
-# 5 individual contributors (4 current ICs + Utkrist) = Rs 1.4 Cr each. Edit these two lines to change.
+# OND 2026 targets. ASSUMPTION: Rs 7 Cr team target (the number being chased); the
+# individual target per POC is Rs 1.8 Cr. Edit these two lines to change.
 OND_TARGET = 7_00_00_000
-OND_INDIVIDUAL_TARGET = 1_40_00_000
+OND_INDIVIDUAL_TARGET = 1_80_00_000
+
+# --- POC Focus Areas tab: plan assumptions to reach the individual target ---
+PLAN_AOV = 7_00_000          # target average order value (Rs 7L)
+PLAN_MIN_CONV = 0.32         # Audit -> Go-Live ratio: plan uses max(rep's last-quarter ratio, this)
+BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
+EARLY_DAYS = 10              # before this many days into the quarter, focus uses the baseline, not live pace
+MIN_AUDITS_FOR_RATIO = 5     # need at least this many audits before the live Audit->Go-Live ratio is trusted
 
 # Individual contributors shown in "Achievement by Owner" (Rahul is excluded there on request).
 # Add Utkrist here (and to TEAM_OWNERS, with his exact Salesforce Owner.Name) once he starts.
@@ -393,10 +401,10 @@ def build_dashboard():
     today = date.today()
 
     # ================= PER-QUARTER FOCUS DATA (OND live, JAS frozen) =================
-    def _hist_count(stage, start_s, end_s):
-        """Opportunities that moved into `stage` in the window, regardless of later stage."""
+    def _hist_by_owner(stage, start_s, end_s):
+        """Distinct opportunities that moved into `stage` in the window (regardless of later stage), per owner."""
         q = f"""
-            SELECT OpportunityId
+            SELECT OpportunityId, Opportunity.Owner.Name
             FROM OpportunityHistory
             WHERE StageName = '{stage}'
               AND CreatedDate >= {start_s}T00:00:00Z
@@ -404,7 +412,12 @@ def build_dashboard():
               AND Opportunity.RecordType.Name = 'Kwik Ads'
               AND Opportunity.Owner.Name IN ('{owner_names_sql}')
         """
-        return len(set(r["OpportunityId"] for r in query_all(sf, q)))
+        seen = defaultdict(set)
+        for r in query_all(sf, q):
+            owner = owner_short(((r.get("Opportunity") or {}).get("Owner") or {}).get("Name"))
+            if owner:
+                seen[owner].add(r["OpportunityId"])
+        return {o: len(ids) for o, ids in seen.items()}
 
     def _empty_lead_agg():
         return {"buckets": defaultdict(int), "by_owner": defaultdict(lambda: defaultdict(int)), "total": 0}
@@ -449,20 +462,123 @@ def build_dashboard():
         for o, (c, a) in bucket["owner_totals"].items():
             if o != "Rahul":
                 ach[o] = [c, a]
-        pitches = _hist_count("Pitch", start_s, end_s)
-        audits = _hist_count("Audit Done", start_s, end_s)
+        pitches_by = _hist_by_owner("Pitch", start_s, end_s)
+        audits_by = _hist_by_owner("Audit Done", start_s, end_s)
+        pitches = sum(pitches_by.values())
+        audits = sum(audits_by.values())
         qdata[qk] = {
             "rows": bucket["rows"], "total": bucket["total"], "deal_count": deal_count,
             "months": month_buckets, "avg_ticket": (bucket["total"] / deal_count) if deal_count else 0,
-            "ach": ach, "pitches": pitches, "audits": audits,
+            "ach": ach, "pitches": pitches, "audits": audits, "pitches_by": pitches_by, "audits_by": audits_by,
             "conv": (deal_count / audits * 100) if audits else 0,
             "progress_pct": round(min(bucket["total"] / cfg["target"] * 100, 100), 1) if cfg["target"] else 0,
         }
-        lead_agg_by_q[qk] = build_lead_agg(start_s, end_s, cfg["months"])
+        if qk == LEAD_FUNNEL_QUARTER:
+            lead_agg_by_q[qk] = build_lead_agg(start_s, end_s, cfg["months"])
 
     lead_agg = lead_agg_by_q[LEAD_FUNNEL_QUARTER]
     lead_months = QUARTER_CFG[LEAD_FUNNEL_QUARTER]["months"]
     lead_periods = ["QDR"] + lead_months
+
+    # ================= POC FOCUS AREAS: live quarter vs the plan to hit each POC's target =================
+    live_cfg = QUARTER_CFG[LEAD_FUNNEL_QUARTER]
+    q_days = (live_cfg["end"] - live_cfg["start"]).days
+    elapsed_days = min(max((today - live_cfg["start"]).days + 1, 1), q_days)
+    frac = elapsed_days / q_days
+    use_live = elapsed_days >= EARLY_DAYS
+
+    def _lakh(x):
+        return f"₹{x/100000:.1f}L"
+
+    def _pctv(x):
+        return f"{x*100:.1f}%"
+
+    def _chip_class(ratio):
+        if ratio is None:
+            return "na"
+        return "ok" if ratio >= 1.0 else ("warn" if ratio >= 0.85 else "bad")
+
+    focus_reps = []
+    base_q, live_q = qdata[BASELINE_QUARTER], qdata[LEAD_FUNNEL_QUARTER]
+    target = live_cfg["individual_target"]
+    for rep in IC_NAMES:
+        b_pit, b_aud = base_q["pitches_by"].get(rep, 0), base_q["audits_by"].get(rep, 0)
+        b_gl, b_arr = base_q["ach"][rep]
+        c_pit, c_aud = live_q["pitches_by"].get(rep, 0), live_q["audits_by"].get(rep, 0)
+        c_gl, c_arr = live_q["ach"][rep]
+
+        b_conv = (b_gl / b_aud) if b_aud else None
+        b_aov = (b_arr / b_gl) if b_gl else None
+        b_p2a = (b_aud / b_pit) if b_pit else None
+        conv_t = max(b_conv or 0, PLAN_MIN_CONV)
+        aud_t = math.ceil(target / (PLAN_AOV * conv_t))
+        pit_t = math.ceil(aud_t / b_p2a) if b_p2a else None
+
+        c_conv = (c_gl / c_aud) if c_aud >= MIN_AUDITS_FOR_RATIO else None
+        c_aov = (c_arr / c_gl) if c_gl else None
+        exp_pit = pit_t * frac if pit_t else None
+        exp_aud = aud_t * frac
+        exp_arr = target * frac
+
+        def pick(base_ratio, live_ratio):
+            return (live_ratio, "live") if (use_live and live_ratio is not None) else (base_ratio, "baseline")
+
+        drivers = []
+        # --- Pitches ---
+        r, basis = pick((b_pit / pit_t) if pit_t else None, (c_pit / exp_pit) if exp_pit else None)
+        if basis == "live":
+            cell, msg = f"{c_pit} vs {exp_pit:.0f} by today", f"Pitches behind pace: {c_pit} done vs {exp_pit:.0f} expected by today (quarter needs ~{pit_t})."
+        else:
+            cell = f"{b_pit} in JAS → ~{pit_t} needed" if pit_t else f"{b_pit} in JAS"
+            msg = f"Pitch volume: needs ~{pit_t} pitches this quarter vs {b_pit} in JAS." if pit_t else "Pitch volume"
+        drivers.append({"name": "Pitches", "ratio": r, "basis": basis, "cell": cell, "msg": msg})
+        # --- Audit -> Go-Live ratio ---
+        r, basis = pick((b_conv / conv_t) if b_conv is not None else None, (c_conv / conv_t) if c_conv is not None else None)
+        if basis == "live":
+            cell, msg = f"{_pctv(c_conv)} vs {_pctv(conv_t)} needed", f"Audit → Go-Live ratio is {_pctv(c_conv)} vs {_pctv(conv_t)} needed."
+        else:
+            cell = f"{_pctv(b_conv)} in JAS → {_pctv(conv_t)} needed" if b_conv is not None else "n/a"
+            msg = f"Audit → Go-Live ratio: {_pctv(b_conv)} in JAS vs {_pctv(conv_t)} needed." if b_conv is not None else "Audit → Go-Live ratio"
+        drivers.append({"name": "Audit → Go-Live", "ratio": r, "basis": basis, "cell": cell, "msg": msg})
+        # --- AOV ---
+        r, basis = pick((b_aov / PLAN_AOV) if b_aov else None, (c_aov / PLAN_AOV) if c_aov else None)
+        if basis == "live":
+            cell, msg = f"{_lakh(c_aov)} vs {_lakh(PLAN_AOV)}", f"AOV is {_lakh(c_aov)} vs {_lakh(PLAN_AOV)} needed."
+        else:
+            cell = f"{_lakh(b_aov)} in JAS → {_lakh(PLAN_AOV)}" if b_aov else "n/a"
+            msg = f"AOV: {_lakh(b_aov)} in JAS vs {_lakh(PLAN_AOV)} needed." if b_aov else "AOV"
+        drivers.append({"name": "AOV", "ratio": r, "basis": basis, "cell": cell, "msg": msg})
+
+        ranked = [d for d in drivers if d["ratio"] is not None]
+        worst = min(ranked, key=lambda d: d["ratio"]) if ranked else None
+        if worst is None:
+            focus_name, focus_msg, sev = "—", "Not enough data yet.", "na"
+        elif worst["ratio"] >= 0.95:
+            focus_name, focus_msg, sev = "On track", "All three drivers are at or near plan. Keep the pace.", "ok"
+        else:
+            focus_name, focus_msg, sev = worst["name"], worst["msg"], _chip_class(worst["ratio"])
+
+        live_conv_ratio = (c_conv / conv_t) if c_conv is not None else None
+        live_aov_ratio = (c_aov / PLAN_AOV) if c_aov else None
+        base_conv_ratio = (b_conv / conv_t) if b_conv is not None else None
+        base_aov_ratio = (b_aov / PLAN_AOV) if b_aov else None
+        focus_reps.append({
+            "rep": rep, "drivers": drivers, "focus_name": focus_name, "focus_msg": focus_msg, "sev": sev,
+            "arr": c_arr, "arr_pct": (c_arr / target * 100) if target else 0, "exp_arr": exp_arr,
+            "proj_arr": (c_arr / frac) if frac else 0,
+            "rows": [
+                ("Pitches", str(b_pit), str(c_pit), f"{exp_pit:.0f}" if exp_pit is not None else "–", f"~{pit_t}" if pit_t else "–",
+                 _chip_class((c_pit / exp_pit) if (use_live and exp_pit) else ((b_pit / pit_t) if pit_t else None))),
+                ("Audits done", str(b_aud), str(c_aud), f"{exp_aud:.0f}", str(aud_t),
+                 _chip_class((c_aud / exp_aud) if (use_live and exp_aud) else (b_aud / aud_t))),
+                ("Audit → Go-Live", _pctv(b_conv) if b_conv is not None else "–", _pctv(c_conv) if c_conv is not None else "–", "–", f"≥ {_pctv(conv_t)}",
+                 _chip_class(live_conv_ratio if (use_live and live_conv_ratio is not None) else base_conv_ratio)),
+                ("AOV", _lakh(b_aov) if b_aov else "–", _lakh(c_aov) if c_aov else "–", "–", _lakh(PLAN_AOV),
+                 _chip_class(live_aov_ratio if (use_live and live_aov_ratio is not None) else base_aov_ratio)),
+                ("Booked ARR", fmt_currency(b_arr), fmt_currency(c_arr), fmt_currency(exp_arr), fmt_currency(target),
+                 _chip_class((c_arr / exp_arr) if (use_live and exp_arr) else ((b_arr / target) if target else None))),
+            ],
+        })
 
     def pct_of(n, total):
         return f"{(n/total*100):.1f}%" if total else "0%"
@@ -711,6 +827,58 @@ def build_dashboard():
 """
         return f'<div class="month-selector">{btns}</div>' + panels
 
+    def render_focus_areas_tab():
+        chip_txt = {"ok": "On track", "warn": "Watch", "bad": "Behind", "na": "—"}
+        banner = (f"Day {elapsed_days} of {q_days} ({frac*100:.0f}% of OND elapsed). " +
+                  ("Focus areas use live pace against the plan." if use_live else
+                   f"Early in the quarter: focus areas are based on JAS baselines and switch to live pace after day {EARLY_DAYS}."))
+        summary = "<table><tr><th>POC</th><th class='center-cell'>Booked ARR vs target</th><th>Pitches</th><th>Audit → Go-Live</th><th>AOV</th><th>🔎 Focus area</th></tr>"
+        for fr in focus_reps:
+            cells = ""
+            for d in fr["drivers"]:
+                cc = _chip_class(d["ratio"])
+                cells += f"<td><span class='chip {cc}'>{chip_txt[cc]}</span><div class='cell-sub'>{d['cell']}</div></td>"
+            summary += (f"<tr><td><b>{fr['rep']}</b></td><td class='center-cell'>{fmt_currency(fr['arr'])}<div class='cell-sub'>{fr['arr_pct']:.0f}% of {fmt_currency(target)}</div></td>"
+                        f"{cells}<td><span class='chip {fr['sev']}'>{fr['focus_name']}</span></td></tr>")
+        summary += "</table>"
+
+        cards = ""
+        for fr in focus_reps:
+            initials = fr["rep"][:2].upper()
+            bar = min(fr["arr_pct"], 100)
+            exp_pos = min(fr["exp_arr"] / target * 100, 100) if target else 0
+            rows_html = ""
+            for name, base, cur, exp, need, chip in fr["rows"]:
+                rows_html += (f"<tr><td>{name}</td><td class='center-cell'>{base}</td><td class='center-cell'><b>{cur}</b></td>"
+                              f"<td class='center-cell'>{exp}</td><td class='center-cell'>{need}</td><td class='center-cell'><span class='chip {chip}'>{chip_txt[chip]}</span></td></tr>")
+            proj = fmt_currency(fr["proj_arr"]) if use_live else f"available after day {EARLY_DAYS}"
+            cards += f"""
+    <div class="chart-card focus-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">{initials}</div></div>
+        <div><b style="font-size:15px;color:var(--heading)">{fr['rep']}</b>
+        <div class="cell-sub">{fmt_currency(fr['arr'])} of {fmt_currency(target)} · expected by today {fmt_currency(fr['exp_arr'])} · projected at current pace: {proj}</div></div>
+      </div>
+      <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
+        <div class="progress-fill" style="width:{bar:.1f}%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:{exp_pos:.1f}%;width:2px;background:var(--navy)" title="Expected by today"></div>
+      </div>
+      <table>
+        <tr><th>Driver</th><th class='center-cell'>{BASELINE_QUARTER} (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        {rows_html}
+      </table>
+      <div class="focus-callout {fr['sev']}">🔎 Focus: <b>{fr['focus_name']}</b> — {fr['focus_msg']}</div>
+    </div>"""
+        return f"""
+  <div class="tab-content" id="pocfocus">
+    <h2>🧭 POC Focus Areas — OND {FOCUS_YEAR} · target {fmt_currency(target)} per POC</h2>
+    <p class="section-note">{banner}</p>
+    {summary}
+    {cards}
+    <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits are counted from Salesforce stage history (opportunities that reached Pitch or Audit Done in the period), so they can differ from the manual tracker.</p>
+  </div>
+"""
+
     # ---- Chart data (JS-side Chart.js) ----
     lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
 
@@ -743,7 +911,7 @@ def build_dashboard():
     pipeline_weighted_values = [stage_summary[s]["weighted"] for s in pipeline_stage_labels]
 
     chart_data_json = json.dumps({
-        "focus": {qk: focus_payload(qk) for qk in QUARTER_CFG},
+        "focus": {LEAD_FUNNEL_QUARTER: focus_payload(LEAD_FUNNEL_QUARTER)},
         "leadPeriods": lead_periods,
         "leadFunnelByPeriod": {
             pd: {"labels": lead_labels, "values": [lead_agg[pd]["buckets"].get(l, 0) for l in lead_labels]}
@@ -825,6 +993,16 @@ def build_dashboard():
   .target-summary .big {{ font-size:21px; font-weight:700; color:var(--heading); font-family:Georgia,serif; }}
   .target-summary .lbl {{ font-size:11px; color:var(--muted); }}
   .section-note {{ font-size:11.5px; color:var(--muted); font-style:italic; margin:-8px 0 16px; }}
+  .chip {{ display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; }}
+  .chip.ok {{ background:#DCF1DC; color:#1F7A1F; }}
+  .chip.warn {{ background:#FBF1D6; color:#8A6410; }}
+  .chip.bad {{ background:#F7DEDE; color:#B33A3A; }}
+  .chip.na {{ background:#ECEEF4; color:#6B7390; }}
+  .cell-sub {{ font-size:10.5px; color:var(--muted); margin-top:3px; font-weight:400; }}
+  .focus-callout {{ border-radius:10px; padding:10px 14px; font-size:12.5px; margin-top:12px; background:#ECEEF4; color:var(--slate); border-left:4px solid #8891A3; }}
+  .focus-callout.bad {{ background:#FBEAEA; color:#8F2B2B; border-left-color:#B33A3A; }}
+  .focus-callout.warn {{ background:#FDF6E3; color:#7A5A12; border-left-color:#C98A2C; }}
+  .focus-callout.ok {{ background:#E7F4E7; color:#1B5E1B; border-left-color:#1F7A1F; }}
   footer {{ text-align:center; padding:24px; font-size:11.5px; color:var(--muted); }}
 </style>
 </head>
@@ -836,7 +1014,7 @@ def build_dashboard():
 </header>
 <nav>
   <button class="tab-btn active" data-tab="ond">🎯 OND {FOCUS_YEAR} (Focus)</button>
-  <button class="tab-btn" data-tab="jas">🏁 JAS {FOCUS_YEAR}</button>
+  <button class="tab-btn" data-tab="pocfocus">🧭 POC Focus Areas</button>
   <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
@@ -846,7 +1024,7 @@ def build_dashboard():
 
   {render_focus_tab('OND', True)}
 
-  {render_focus_tab('JAS')}
+  {render_focus_areas_tab()}
 
   <div class="tab-content" id="tilldate">
     <h2>⭐ Total Go-Live — All Time (Team Only)</h2>
@@ -1003,7 +1181,6 @@ def build_dashboard():
     }});
   }}
   initFocusCharts('OND', CHART_DATA.focus.OND);
-  initFocusCharts('', CHART_DATA.focus.JAS);
 
   CHART_DATA.leadPeriods.forEach(period => {{
     const canvasId = 'leadChart' + period;
@@ -1050,6 +1227,8 @@ def build_dashboard():
     for qk, cfg in QUARTER_CFG.items():
         d = qdata[qk]
         print(f"{qk} {FOCUS_YEAR}: {d['deal_count']} Go-Lives, {fmt_currency(d['total'])} ({d['progress_pct']}% of {fmt_currency(cfg['target'])}); pitches={d['pitches']}, audits={d['audits']}, conv={d['conv']:.1f}%, avg ticket={fmt_currency(d['avg_ticket'])}")
+    for fr in focus_reps:
+        print(f"Focus {fr['rep']}: {fr['focus_name']} — {fr['focus_msg']}")
     print(f"Agreement Signed: {len(agreement_rows)} brands, {fmt_currency(agreement_total)}")
     print(f"Active pipeline (OND-created only): {pipeline_total_count} brands raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}; carry-forward excluded: {carry_count} brands {fmt_currency(carry_arr)}")
     print(f"OND leads: {lead_agg['QDR']['total']} {dict(lead_agg['QDR']['buckets'])}")
