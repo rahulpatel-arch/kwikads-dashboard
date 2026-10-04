@@ -85,6 +85,16 @@
   .target-summary .big { font-size:21px; font-weight:700; color:var(--heading); font-family:Georgia,serif; }
   .target-summary .lbl { font-size:11px; color:var(--muted); }
   .section-note { font-size:11.5px; color:var(--muted); font-style:italic; margin:-8px 0 16px; }
+  .chip { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; }
+  .chip.ok { background:#DCF1DC; color:#1F7A1F; }
+  .chip.warn { background:#FBF1D6; color:#8A6410; }
+  .chip.bad { background:#F7DEDE; color:#B33A3A; }
+  .chip.na { background:#ECEEF4; color:#6B7390; }
+  .cell-sub { font-size:10.5px; color:var(--muted); margin-top:3px; font-weight:400; }
+  .focus-callout { border-radius:10px; padding:10px 14px; font-size:12.5px; margin-top:12px; background:#ECEEF4; color:var(--slate); border-left:4px solid #8891A3; }
+  .focus-callout.bad { background:#FBEAEA; color:#8F2B2B; border-left-color:#B33A3A; }
+  .focus-callout.warn { background:#FDF6E3; color:#7A5A12; border-left-color:#C98A2C; }
+  .focus-callout.ok { background:#E7F4E7; color:#1B5E1B; border-left-color:#1F7A1F; }
   footer { text-align:center; padding:24px; font-size:11.5px; color:var(--muted); }
 </style>
 </head>
@@ -92,11 +102,11 @@
 <header>
   <div class="brand">GoKwik · Kwik Ads</div>
   <h1>Kwik Ads Dashboard <span class="badge">Live · Team Only</span></h1>
-  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 04 Oct 2026 16:25 UTC</div>
+  <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced 04 Oct 2026 18:39 UTC</div>
 </header>
 <nav>
   <button class="tab-btn active" data-tab="ond">🎯 OND 2026 (Focus)</button>
-  <button class="tab-btn" data-tab="jas">🏁 JAS 2026</button>
+  <button class="tab-btn" data-tab="pocfocus">🧭 POC Focus Areas</button>
   <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
@@ -145,38 +155,38 @@
             <div class="owner-card">
               <div class="initials">G</div>
               <div class="name">Gaurav</div>
-              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,40,00,000</span></div>
+              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:0.0%;background:var(--red);font-size:9.5px;padding-right:6px;">0%</div>
               </div>
-              <div class="avg">Gap: ₹1,40,00,000</div>
+              <div class="avg">Gap: ₹1,80,00,000</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Trishun</div>
-              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,40,00,000</span></div>
+              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:0.0%;background:var(--red);font-size:9.5px;padding-right:6px;">0%</div>
               </div>
-              <div class="avg">Gap: ₹1,40,00,000</div>
+              <div class="avg">Gap: ₹1,80,00,000</div>
             </div>
             <div class="owner-card">
               <div class="initials">T</div>
               <div class="name">Tushar</div>
-              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,40,00,000</span></div>
+              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:0.0%;background:var(--red);font-size:9.5px;padding-right:6px;">0%</div>
               </div>
-              <div class="avg">Gap: ₹1,40,00,000</div>
+              <div class="avg">Gap: ₹1,80,00,000</div>
             </div>
             <div class="owner-card">
               <div class="initials">V</div>
               <div class="name">Vaishak</div>
-              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,40,00,000</span></div>
+              <div class="arr">₹0 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
               <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
                 <div class="progress-fill" style="width:0.0%;background:var(--red);font-size:9.5px;padding-right:6px;">0%</div>
               </div>
-              <div class="avg">Gap: ₹1,40,00,000</div>
+              <div class="avg">Gap: ₹1,80,00,000</div>
             </div>
     </div>
 
@@ -211,157 +221,76 @@
 
 
   
-  <div class="tab-content" id="jas">
-
-    <div class="chart-card">
-      <h2 style="margin-top:0">🎯 JAS 2026 — Target vs Achievement</h2>
-      <div class="progress-wrap">
-        <div class="progress-fill" style="width:54.2%">54.2%</div>
+  <div class="tab-content" id="pocfocus">
+    <h2>🧭 POC Focus Areas — OND 2026 · target ₹1,80,00,000 per POC</h2>
+    <p class="section-note">Day 4 of 92 (4% of OND elapsed). Early in the quarter: focus areas are based on JAS baselines and switch to live pace after day 10.</p>
+    <table><tr><th>POC</th><th class='center-cell'>Booked ARR vs target</th><th>Pitches</th><th>Audit → Go-Live</th><th>AOV</th><th>🔎 Focus area</th></tr><tr><td><b>Gaurav</b></td><td class='center-cell'>₹0<div class='cell-sub'>0% of ₹1,80,00,000</div></td><td><span class='chip ok'>On track</span><div class='cell-sub'>196 in JAS → ~169 needed</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>20.2% in JAS → 32.0% needed</div></td><td><span class='chip warn'>Watch</span><div class='cell-sub'>₹6.2L in JAS → ₹7.0L</div></td><td><span class='chip bad'>Audit → Go-Live</span></td></tr><tr><td><b>Trishun</b></td><td class='center-cell'>₹0<div class='cell-sub'>0% of ₹1,80,00,000</div></td><td><span class='chip warn'>Watch</span><div class='cell-sub'>138 in JAS → ~146 needed</div></td><td><span class='chip warn'>Watch</span><div class='cell-sub'>28.6% in JAS → 32.0% needed</div></td><td><span class='chip warn'>Watch</span><div class='cell-sub'>₹6.3L in JAS → ₹7.0L</div></td><td><span class='chip warn'>Audit → Go-Live</span></td></tr><tr><td><b>Tushar</b></td><td class='center-cell'>₹0<div class='cell-sub'>0% of ₹1,80,00,000</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>132 in JAS → ~202 needed</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>22.6% in JAS → 32.0% needed</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>₹5.7L in JAS → ₹7.0L</div></td><td><span class='chip bad'>Pitches</span></td></tr><tr><td><b>Vaishak</b></td><td class='center-cell'>₹0<div class='cell-sub'>0% of ₹1,80,00,000</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>87 in JAS → ~205 needed</div></td><td><span class='chip ok'>On track</span><div class='cell-sub'>42.3% in JAS → 42.3% needed</div></td><td><span class='chip bad'>Behind</span><div class='cell-sub'>₹5.8L in JAS → ₹7.0L</div></td><td><span class='chip bad'>Pitches</span></td></tr></table>
+    
+    <div class="chart-card focus-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">GA</div></div>
+        <div><b style="font-size:15px;color:var(--heading)">Gaurav</b>
+        <div class="cell-sub">₹0 of ₹1,80,00,000 · expected by today ₹7,82,609 · projected at current pace: available after day 10</div></div>
       </div>
-      <div class="target-summary">
-        <div><div class="big">₹7,20,00,000</div><div class="lbl">Target (JAS)</div></div>
-        <div><div class="big" style="color:var(--gold)">₹3,90,31,000</div><div class="lbl">Achieved So Far</div></div>
-        <div><div class="big" style="color:var(--red)">₹3,29,69,000</div><div class="lbl">Gap Remaining</div></div>
-        <div><div class="big" style="color:var(--purple)">₹16,62,000</div><div class="lbl">Agreement Signed (soon)</div></div>
+      <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
+        <div class="progress-fill" style="width:0.0%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:4.3%;width:2px;background:var(--navy)" title="Expected by today"></div>
       </div>
-      <canvas id="targetChart" height="140"></canvas>
+      <table>
+        <tr><th>Driver</th><th class='center-cell'>JAS (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        <tr><td>Pitches</td><td class='center-cell'>196</td><td class='center-cell'><b>32</b></td><td class='center-cell'>7</td><td class='center-cell'>~169</td><td class='center-cell'><span class='chip ok'>On track</span></td></tr><tr><td>Audits done</td><td class='center-cell'>94</td><td class='center-cell'><b>22</b></td><td class='center-cell'>4</td><td class='center-cell'>81</td><td class='center-cell'><span class='chip ok'>On track</span></td></tr><tr><td>Audit → Go-Live</td><td class='center-cell'>20.2%</td><td class='center-cell'><b>0.0%</b></td><td class='center-cell'>–</td><td class='center-cell'>≥ 32.0%</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>AOV</td><td class='center-cell'>₹6.2L</td><td class='center-cell'><b>–</b></td><td class='center-cell'>–</td><td class='center-cell'>₹7.0L</td><td class='center-cell'><span class='chip warn'>Watch</span></td></tr><tr><td>Booked ARR</td><td class='center-cell'>₹1,18,59,000</td><td class='center-cell'><b>₹0</b></td><td class='center-cell'>₹7,82,609</td><td class='center-cell'>₹1,80,00,000</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr>
+      </table>
+      <div class="focus-callout bad">🔎 Focus: <b>Audit → Go-Live</b> — Audit → Go-Live ratio: 20.2% in JAS vs 32.0% needed.</div>
     </div>
-
-    <div class="stat-row">
-      <div class="stat-card"><div class="icon-tag">🏆</div><div class="num">64</div><div class="label">Total Go-Live (JAS)</div></div>
-      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">593</div><div class="label">Pitches (JAS)</div></div>
-      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">283</div><div class="label">Audits Done (JAS)</div></div>
-      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">22.6%</div><div class="label">Audit → Go-Live Conv.</div></div>
-      <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">₹6,09,859</div><div class="label">Avg Ticket Size (JAS)</div></div>
-    </div>
-
-    <div class="chart-row">
-      <div class="chart-card">
-        <h2 style="margin-top:0">Achievement by Owner</h2>
-        <canvas id="ownerChart"></canvas>
+    <div class="chart-card focus-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">TR</div></div>
+        <div><b style="font-size:15px;color:var(--heading)">Trishun</b>
+        <div class="cell-sub">₹0 of ₹1,80,00,000 · expected by today ₹7,82,609 · projected at current pace: available after day 10</div></div>
       </div>
-      <div class="chart-card">
-        <h2 style="margin-top:0">MQL Lead Funnel — JAS</h2>
-        <canvas id="leadChart"></canvas>
+      <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
+        <div class="progress-fill" style="width:0.0%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:4.3%;width:2px;background:var(--navy)" title="Expected by today"></div>
       </div>
+      <table>
+        <tr><th>Driver</th><th class='center-cell'>JAS (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        <tr><td>Pitches</td><td class='center-cell'>138</td><td class='center-cell'><b>40</b></td><td class='center-cell'>6</td><td class='center-cell'>~146</td><td class='center-cell'><span class='chip warn'>Watch</span></td></tr><tr><td>Audits done</td><td class='center-cell'>77</td><td class='center-cell'><b>14</b></td><td class='center-cell'>4</td><td class='center-cell'>81</td><td class='center-cell'><span class='chip warn'>Watch</span></td></tr><tr><td>Audit → Go-Live</td><td class='center-cell'>28.6%</td><td class='center-cell'><b>0.0%</b></td><td class='center-cell'>–</td><td class='center-cell'>≥ 32.0%</td><td class='center-cell'><span class='chip warn'>Watch</span></td></tr><tr><td>AOV</td><td class='center-cell'>₹6.3L</td><td class='center-cell'><b>–</b></td><td class='center-cell'>–</td><td class='center-cell'>₹7.0L</td><td class='center-cell'><span class='chip warn'>Watch</span></td></tr><tr><td>Booked ARR</td><td class='center-cell'>₹1,38,84,000</td><td class='center-cell'><b>₹0</b></td><td class='center-cell'>₹7,82,609</td><td class='center-cell'>₹1,80,00,000</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr>
+      </table>
+      <div class="focus-callout warn">🔎 Focus: <b>Audit → Go-Live</b> — Audit → Go-Live ratio: 28.6% in JAS vs 32.0% needed.</div>
     </div>
-
-    <div class="owner-row">
-      
-            <div class="owner-card">
-              <div class="initials">T</div>
-              <div class="name">Trishun</div>
-              <div class="arr">₹1,38,84,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
-              <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
-                <div class="progress-fill" style="width:77.1%;background:var(--gold);font-size:9.5px;padding-right:6px;">77%</div>
-              </div>
-              <div class="avg">Gap: ₹41,16,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">G</div>
-              <div class="name">Gaurav</div>
-              <div class="arr">₹1,18,59,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
-              <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
-                <div class="progress-fill" style="width:65.9%;background:var(--gold);font-size:9.5px;padding-right:6px;">66%</div>
-              </div>
-              <div class="avg">Gap: ₹61,41,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">T</div>
-              <div class="name">Tushar</div>
-              <div class="arr">₹68,72,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
-              <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
-                <div class="progress-fill" style="width:38.2%;background:var(--red);font-size:9.5px;padding-right:6px;">38%</div>
-              </div>
-              <div class="avg">Gap: ₹1,11,28,000</div>
-            </div>
-            <div class="owner-card">
-              <div class="initials">V</div>
-              <div class="name">Vaishak</div>
-              <div class="arr">₹64,16,000 <span style="font-weight:400;color:#8891A3;font-size:11px">/ ₹1,80,00,000</span></div>
-              <div class="progress-wrap" style="height:16px;margin:6px 0 4px;">
-                <div class="progress-fill" style="width:35.6%;background:var(--red);font-size:9.5px;padding-right:6px;">36%</div>
-              </div>
-              <div class="avg">Gap: ₹1,15,84,000</div>
-            </div>
+    <div class="chart-card focus-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">TU</div></div>
+        <div><b style="font-size:15px;color:var(--heading)">Tushar</b>
+        <div class="cell-sub">₹0 of ₹1,80,00,000 · expected by today ₹7,82,609 · projected at current pace: available after day 10</div></div>
+      </div>
+      <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
+        <div class="progress-fill" style="width:0.0%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:4.3%;width:2px;background:var(--navy)" title="Expected by today"></div>
+      </div>
+      <table>
+        <tr><th>Driver</th><th class='center-cell'>JAS (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        <tr><td>Pitches</td><td class='center-cell'>132</td><td class='center-cell'><b>29</b></td><td class='center-cell'>9</td><td class='center-cell'>~202</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Audits done</td><td class='center-cell'>53</td><td class='center-cell'><b>21</b></td><td class='center-cell'>4</td><td class='center-cell'>81</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Audit → Go-Live</td><td class='center-cell'>22.6%</td><td class='center-cell'><b>0.0%</b></td><td class='center-cell'>–</td><td class='center-cell'>≥ 32.0%</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>AOV</td><td class='center-cell'>₹5.7L</td><td class='center-cell'><b>–</b></td><td class='center-cell'>–</td><td class='center-cell'>₹7.0L</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Booked ARR</td><td class='center-cell'>₹68,72,000</td><td class='center-cell'><b>₹0</b></td><td class='center-cell'>₹7,82,609</td><td class='center-cell'>₹1,80,00,000</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr>
+      </table>
+      <div class="focus-callout bad">🔎 Focus: <b>Pitches</b> — Pitch volume: needs ~202 pitches this quarter vs 132 in JAS.</div>
     </div>
-
-    <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
-    <div class="stat-row">
-      <div class="stat-card purple"><div class="num">3</div><div class="label">Brands Signed</div></div>
-      <div class="stat-card money"><div class="num">₹16,62,000</div><div class="label">EARR (Signed, Pending Go-Live)</div></div>
+    <div class="chart-card focus-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">VA</div></div>
+        <div><b style="font-size:15px;color:var(--heading)">Vaishak</b>
+        <div class="cell-sub">₹0 of ₹1,80,00,000 · expected by today ₹7,82,609 · projected at current pace: available after day 10</div></div>
+      </div>
+      <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
+        <div class="progress-fill" style="width:0.0%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:4.3%;width:2px;background:var(--navy)" title="Expected by today"></div>
+      </div>
+      <table>
+        <tr><th>Driver</th><th class='center-cell'>JAS (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        <tr><td>Pitches</td><td class='center-cell'>87</td><td class='center-cell'><b>22</b></td><td class='center-cell'>9</td><td class='center-cell'>~205</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Audits done</td><td class='center-cell'>26</td><td class='center-cell'><b>7</b></td><td class='center-cell'>3</td><td class='center-cell'>61</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Audit → Go-Live</td><td class='center-cell'>42.3%</td><td class='center-cell'><b>0.0%</b></td><td class='center-cell'>–</td><td class='center-cell'>≥ 42.3%</td><td class='center-cell'><span class='chip ok'>On track</span></td></tr><tr><td>AOV</td><td class='center-cell'>₹5.8L</td><td class='center-cell'><b>–</b></td><td class='center-cell'>–</td><td class='center-cell'>₹7.0L</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr><tr><td>Booked ARR</td><td class='center-cell'>₹64,16,000</td><td class='center-cell'><b>₹0</b></td><td class='center-cell'>₹7,82,609</td><td class='center-cell'>₹1,80,00,000</td><td class='center-cell'><span class='chip bad'>Behind</span></td></tr>
+      </table>
+      <div class="focus-callout bad">🔎 Focus: <b>Pitches</b> — Pitch volume: needs ~205 pitches this quarter vs 87 in JAS.</div>
     </div>
-    <table><tr><th>Owner</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th></tr>
-<tr><td>Tushar</td><td class='center-cell'>2</td><td class='num-cell'>₹11,46,000</td></tr>
-<tr><td>Trishun</td><td class='center-cell'>1</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr class='total-row'><td>Total</td><td class='center-cell'>3</td><td class='num-cell'>₹16,62,000</td></tr>
-</table>
-
-    <h2>July 2026 Go-Live — 28 Brands · ₹1,75,59,000</h2><table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr><tr><td>Arusha-Storefront-Checkout 1.0</td><td>Gaurav</td><td>2026-07-30</td><td class='num-cell'>₹9,24,000</td></tr>
-<tr><td>Slay fashion</td><td>Trishun</td><td>2026-07-28</td><td class='num-cell'>₹5,40,000</td></tr>
-<tr><td>alzado</td><td>Trishun</td><td>2026-07-28</td><td class='num-cell'>₹5,40,000</td></tr>
-<tr><td>Sanctioned By You</td><td>Trishun</td><td>2026-07-24</td><td class='num-cell'>₹7,02,000</td></tr>
-<tr><td>Houseofaldeno</td><td>Vaishak</td><td>2026-07-23</td><td class='num-cell'>₹5,88,000</td></tr>
-<tr><td>popsols</td><td>Vaishak</td><td>2026-07-22</td><td class='num-cell'>₹6,36,000</td></tr>
-<tr><td>Jungle Marigold</td><td>Trishun</td><td>2026-07-22</td><td class='num-cell'>₹5,52,000</td></tr>
-<tr><td>gemselections</td><td>Trishun</td><td>2026-07-20</td><td class='num-cell'>₹4,80,000</td></tr>
-<tr><td>Kuvar jewels</td><td>Tushar</td><td>2026-07-17</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>cforcover</td><td>Gaurav</td><td>2026-07-16</td><td class='num-cell'>₹8,40,000</td></tr>
-<tr><td>Pronk</td><td>Gaurav</td><td>2026-07-14</td><td class='num-cell'>₹6,00,000</td></tr>
-<tr><td>irazmo</td><td>Vaishak</td><td>2026-07-14</td><td class='num-cell'>₹5,04,000</td></tr>
-<tr><td>hyperballik.com</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,52,000</td></tr>
-<tr><td>Taali Toys</td><td>Gaurav</td><td>2026-07-13</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>VeeCare Dental - Kwik Ads</td><td>Gaurav</td><td>2026-07-11</td><td class='num-cell'>₹6,00,000</td></tr>
-<tr><td>Carrots Jewellery</td><td>Gaurav</td><td>2026-07-11</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Reistor - Storefront</td><td>Trishun</td><td>2026-07-10</td><td class='num-cell'>₹12,12,000</td></tr>
-<tr><td>beweird</td><td>Trishun</td><td>2026-07-09</td><td class='num-cell'>₹4,80,000</td></tr>
-<tr><td>Bluprint</td><td>Gaurav</td><td>2026-07-09</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>bluberyl</td><td>Trishun</td><td>2026-07-06</td><td class='num-cell'>₹8,40,000</td></tr>
-<tr><td>Capshap-Storefront-Checkout 1.0</td><td>Gaurav</td><td>2026-07-06</td><td class='num-cell'>₹6,24,000</td></tr>
-<tr><td>WearFitMentor</td><td>Tushar</td><td>2026-07-06</td><td class='num-cell'>₹5,88,000</td></tr>
-<tr><td>lololepa</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Lotusfashions</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹6,06,000</td></tr>
-<tr><td>Rajganga Paytan</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹6,24,000</td></tr>
-<tr><td>Yodley - Storefront</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹6,49,000</td></tr>
-<tr><td>Sillima Wellness</td><td>Trishun</td><td>2026-07-01</td><td class='num-cell'>₹7,32,000</td></tr>
-<tr><td>Skin Science, Perfected</td><td>Gaurav</td><td>2026-07-01</td><td class='num-cell'>₹5,12,000</td></tr>
-<tr class='total-row'><td colspan='3'>July Total</td><td class='num-cell'>₹1,75,59,000</td></tr></table><h2>August 2026 Go-Live — 19 Brands · ₹1,13,67,000</h2><table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr><tr><td>khadivastraudyog-Storefront-Checkout 1.0</td><td>Gaurav</td><td>2026-08-21</td><td class='num-cell'>₹6,96,000</td></tr>
-<tr><td>Home Saaz</td><td>Tushar</td><td>2026-08-20</td><td class='num-cell'>₹6,02,000</td></tr>
-<tr><td>aflahperfumery.com</td><td>Tushar</td><td>2026-08-20</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>kilkaari - storefront</td><td>Tushar</td><td>2026-08-18</td><td class='num-cell'>₹9,24,000</td></tr>
-<tr><td>auroki.in</td><td>Tushar</td><td>2026-08-18</td><td class='num-cell'>₹4,80,000</td></tr>
-<tr><td>Zuame</td><td>Trishun</td><td>2026-08-18</td><td class='num-cell'>₹5,70,000</td></tr>
-<tr><td>Smiling Rocks</td><td>Trishun</td><td>2026-08-13</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>Southern Rhino</td><td>Tushar</td><td>2026-08-13</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>drinkaquon.com</td><td>Trishun</td><td>2026-08-13</td><td class='num-cell'>₹5,23,000</td></tr>
-<tr><td>Smiling Rocks</td><td>Gaurav</td><td>2026-08-11</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>habeas</td><td>Vaishak</td><td>2026-08-11</td><td class='num-cell'>₹6,24,000</td></tr>
-<tr><td>nounbrown</td><td>Vaishak</td><td>2026-08-11</td><td class='num-cell'>₹5,64,000</td></tr>
-<tr><td>SAFORIA</td><td>Vaishak</td><td>2026-08-07</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>The Latest Label-Storefront-Checkout 1.0</td><td>Tushar</td><td>2026-08-07</td><td class='num-cell'>₹5,64,000</td></tr>
-<tr><td>zembabags.com</td><td>Vaishak</td><td>2026-08-07</td><td class='num-cell'>₹5,04,000</td></tr>
-<tr><td>Own it pure-Storefront-Checkout 1.0</td><td>Trishun</td><td>2026-08-06</td><td class='num-cell'>₹6,12,000</td></tr>
-<tr><td>Makemythingz</td><td>Gaurav</td><td>2026-08-04</td><td class='num-cell'>₹5,88,000</td></tr>
-<tr><td>Homio-Storefront-Checkout 1.0</td><td>Trishun</td><td>2026-08-03</td><td class='num-cell'>₹7,56,000</td></tr>
-<tr><td>pebirds</td><td>Gaurav</td><td>2026-08-03</td><td class='num-cell'>₹7,44,000</td></tr>
-<tr class='total-row'><td colspan='3'>August Total</td><td class='num-cell'>₹1,13,67,000</td></tr></table><h2>September 2026 Go-Live — 17 Brands · ₹1,01,05,000</h2><table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr><tr><td>nataclothing</td><td>Trishun</td><td>2026-09-30</td><td class='num-cell'>₹6,06,000</td></tr>
-<tr><td>Redhorns</td><td>Gaurav</td><td>2026-09-29</td><td class='num-cell'>₹7,02,000</td></tr>
-<tr><td>Sioroa</td><td>Vaishak</td><td>2026-09-24</td><td class='num-cell'>₹6,92,000</td></tr>
-<tr><td>bagabu.co.in</td><td>Vaishak</td><td>2026-09-24</td><td class='num-cell'>₹6,24,000</td></tr>
-<tr><td>The mamamiac</td><td>Trishun</td><td>2026-09-24</td><td class='num-cell'>₹6,53,000</td></tr>
-<tr><td>Raremint - Storefront</td><td>Gaurav</td><td>2026-09-24</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Purfekktfit</td><td>Vaishak</td><td>2026-09-22</td><td class='num-cell'>₹6,00,000</td></tr>
-<tr><td>elbasico.in</td><td>Tushar</td><td>2026-09-22</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr><td>redskullnutrition - Storefront</td><td>Tushar</td><td>2026-09-18</td><td class='num-cell'>₹5,40,000</td></tr>
-<tr><td>blackbeastnutrition</td><td>Tushar</td><td>2026-09-18</td><td class='num-cell'>₹5,40,000</td></tr>
-<tr><td>theyellowbells</td><td>Trishun</td><td>2026-09-17</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Theleatherwarehouse</td><td>Vaishak</td><td>2026-09-17</td><td class='num-cell'>₹5,64,000</td></tr>
-<tr><td>women data</td><td>Tushar</td><td>2026-09-16</td><td class='num-cell'>₹5,16,000</td></tr>
-<tr><td>Healing Pharma - Storefront</td><td>Trishun</td><td>2026-09-07</td><td class='num-cell'>₹6,66,000</td></tr>
-<tr><td>SOULLY <> Kwik Engage</td><td>Trishun</td><td>2026-09-03</td><td class='num-cell'>₹6,06,000</td></tr>
-<tr><td>The Maeva Store</td><td>Gaurav</td><td>2026-09-03</td><td class='num-cell'>₹6,96,000</td></tr>
-<tr><td>kalyanja.com</td><td>Trishun</td><td>2026-09-01</td><td class='num-cell'>₹5,34,000</td></tr>
-<tr class='total-row'><td colspan='3'>September Total</td><td class='num-cell'>₹1,01,05,000</td></tr></table>
+    <p class="section-note">How the plan is set: AOV ₹7.0L; Audit → Go-Live at least the higher of the POC's JAS ratio and 32%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's JAS Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits are counted from Salesforce stage history (opportunities that reached Pitch or Audit Done in the period), so they can differ from the manual tracker.</p>
   </div>
 
 
@@ -559,7 +488,7 @@
   <div class="tab-content" id="pipeline">
     <h2>🚦 Weighted Active Pipeline — OND 2026 (Team Only)</h2>
     <p class="section-note">Weighted using stage-conversion assumptions: Pitch 5%, Pre Audit 15%, Audit Done 30%, Agreement Signed 70% (this last figure wasn't specified — adjust in the script if a different rate applies).</p>
-    <p class="section-note">Showing only opportunities created in OND 2026 (from 01 Oct 2026). 250 active opportunities worth ₹11,04,75,000 created before OND are not included here.</p>
+    <p class="section-note">Showing only opportunities created in OND 2026 (from 01 Oct 2026). 246 active opportunities worth ₹10,89,15,000 created before OND are not included here.</p>
     <div class="stat-row">
       <div class="stat-card"><div class="num">2</div><div class="label">Active Brands</div></div>
       <div class="stat-card money"><div class="num">₹5,40,000</div><div class="label">Raw Pipeline EARR</div></div>
@@ -590,9 +519,9 @@
     <div class="leadtab-panel active" id="leadtab-QDR">
       
         <div class="stat-row">
-          <div class="stat-card"><div class="num">69</div><div class="label">Total Leads</div></div>
-          <div class="stat-card red"><div class="num">11</div><div class="label">Unqualified · 15.9%</div></div>
-          <div class="stat-card"><div class="num">57</div><div class="label">Open · 82.6%</div></div>
+          <div class="stat-card"><div class="num">71</div><div class="label">Total Leads</div></div>
+          <div class="stat-card red"><div class="num">11</div><div class="label">Unqualified · 15.5%</div></div>
+          <div class="stat-card"><div class="num">59</div><div class="label">Open · 83.1%</div></div>
           <div class="stat-card purple"><div class="num">0</div><div class="label">Contacted · 0.0%</div></div>
           <div class="stat-card"><div class="num">0</div><div class="label">Could Not Connect · 0.0%</div></div>
           <div class="stat-card green"><div class="num">1</div><div class="label">Converted · 1.4%</div></div>
@@ -603,20 +532,20 @@
       </div>
       <h2>By Rep</h2>
       <table><tr><th>Owner</th><th class='center-cell'>Total</th><th class='center-cell'>Unqualified</th><th class='center-cell'>Open</th><th class='center-cell'>Contacted</th><th class='center-cell'>Could Not Connect</th><th class='center-cell'>Converted</th></tr>
-<tr><td>Gaurav</td><td class='center-cell'>17</td><td class='center-cell'>2</td><td class='center-cell'>15</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
+<tr><td>Gaurav</td><td class='center-cell'>18</td><td class='center-cell'>2</td><td class='center-cell'>16</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
 <tr><td>Rahul</td><td class='center-cell'>6</td><td class='center-cell'>0</td><td class='center-cell'>5</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr>
 <tr><td>Trishun</td><td class='center-cell'>17</td><td class='center-cell'>5</td><td class='center-cell'>12</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
 <tr><td>Tushar</td><td class='center-cell'>14</td><td class='center-cell'>1</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
-<tr><td>Vaishak</td><td class='center-cell'>15</td><td class='center-cell'>3</td><td class='center-cell'>12</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
-<tr class='total-row'><td>Team Total</td><td class='center-cell'>69</td><td class='center-cell'>11</td><td class='center-cell'>57</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr><tr><td><i>% of Total</i></td><td class='center-cell'>100%</td><td class='center-cell'>15.9%</td><td class='center-cell'>82.6%</td><td class='center-cell'>0.0%</td><td class='center-cell'>0.0%</td><td class='center-cell'>1.4%</td></tr></table>
+<tr><td>Vaishak</td><td class='center-cell'>16</td><td class='center-cell'>3</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
+<tr class='total-row'><td>Team Total</td><td class='center-cell'>71</td><td class='center-cell'>11</td><td class='center-cell'>59</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr><tr><td><i>% of Total</i></td><td class='center-cell'>100%</td><td class='center-cell'>15.5%</td><td class='center-cell'>83.1%</td><td class='center-cell'>0.0%</td><td class='center-cell'>0.0%</td><td class='center-cell'>1.4%</td></tr></table>
     </div>
 
     <div class="leadtab-panel" id="leadtab-October">
       
         <div class="stat-row">
-          <div class="stat-card"><div class="num">69</div><div class="label">Total Leads</div></div>
-          <div class="stat-card red"><div class="num">11</div><div class="label">Unqualified · 15.9%</div></div>
-          <div class="stat-card"><div class="num">57</div><div class="label">Open · 82.6%</div></div>
+          <div class="stat-card"><div class="num">71</div><div class="label">Total Leads</div></div>
+          <div class="stat-card red"><div class="num">11</div><div class="label">Unqualified · 15.5%</div></div>
+          <div class="stat-card"><div class="num">59</div><div class="label">Open · 83.1%</div></div>
           <div class="stat-card purple"><div class="num">0</div><div class="label">Contacted · 0.0%</div></div>
           <div class="stat-card"><div class="num">0</div><div class="label">Could Not Connect · 0.0%</div></div>
           <div class="stat-card green"><div class="num">1</div><div class="label">Converted · 1.4%</div></div>
@@ -627,12 +556,12 @@
       </div>
       <h2>By Rep</h2>
       <table><tr><th>Owner</th><th class='center-cell'>Total</th><th class='center-cell'>Unqualified</th><th class='center-cell'>Open</th><th class='center-cell'>Contacted</th><th class='center-cell'>Could Not Connect</th><th class='center-cell'>Converted</th></tr>
-<tr><td>Gaurav</td><td class='center-cell'>17</td><td class='center-cell'>2</td><td class='center-cell'>15</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
+<tr><td>Gaurav</td><td class='center-cell'>18</td><td class='center-cell'>2</td><td class='center-cell'>16</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
 <tr><td>Rahul</td><td class='center-cell'>6</td><td class='center-cell'>0</td><td class='center-cell'>5</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr>
 <tr><td>Trishun</td><td class='center-cell'>17</td><td class='center-cell'>5</td><td class='center-cell'>12</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
 <tr><td>Tushar</td><td class='center-cell'>14</td><td class='center-cell'>1</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
-<tr><td>Vaishak</td><td class='center-cell'>15</td><td class='center-cell'>3</td><td class='center-cell'>12</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
-<tr class='total-row'><td>Team Total</td><td class='center-cell'>69</td><td class='center-cell'>11</td><td class='center-cell'>57</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr><tr><td><i>% of Total</i></td><td class='center-cell'>100%</td><td class='center-cell'>15.9%</td><td class='center-cell'>82.6%</td><td class='center-cell'>0.0%</td><td class='center-cell'>0.0%</td><td class='center-cell'>1.4%</td></tr></table>
+<tr><td>Vaishak</td><td class='center-cell'>16</td><td class='center-cell'>3</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>0</td></tr>
+<tr class='total-row'><td>Team Total</td><td class='center-cell'>71</td><td class='center-cell'>11</td><td class='center-cell'>59</td><td class='center-cell'>0</td><td class='center-cell'>0</td><td class='center-cell'>1</td></tr><tr><td><i>% of Total</i></td><td class='center-cell'>100%</td><td class='center-cell'>15.5%</td><td class='center-cell'>83.1%</td><td class='center-cell'>0.0%</td><td class='center-cell'>0.0%</td><td class='center-cell'>1.4%</td></tr></table>
     </div>
 
     <div class="leadtab-panel" id="leadtab-November">
@@ -680,11 +609,11 @@
   <div class="tab-content" id="sfreports">
     <h2>📁 Salesforce Reports</h2>
     <p class="section-note">Live previews pulled via the Salesforce Reports API where the report structure allows it. If a preview isn't available, use the link to open the report directly in Salesforce.</p>
-    <div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">Opp Funnel OND'26</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">INR 132,994,802.16</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>Prospecting</th><th class='center-cell'>Pitch</th><th class='center-cell'>Closed Lost</th><th class='center-cell'>Pre Audit</th><th class='center-cell'>Audit Done</th><th class='center-cell'>Agreement Shared</th><th class='center-cell'>Agreement signed</th><th class='center-cell'>Total</th></tr><tr><td>gaurav1 Panchal</td><td class='center-cell'>INR 0.00</td><td class='center-cell'>INR 10,200,000.00</td><td class='center-cell'>INR 4,260,000.00</td><td class='center-cell'>INR 7,080,000.00</td><td class='center-cell'>INR 13,080,000.00</td><td class='center-cell'>INR 1,020,001.08</td><td class='center-cell'>INR 0.00</td><td class='center-cell' style='font-weight:700'>INR 35,640,001.08</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>INR 0.00</td><td class='center-cell'>INR 12,996,000.00</td><td class='center-cell'>INR 3,708,000.00</td><td class='center-cell'>INR 5,788,800.00</td><td class='center-cell'>INR 6,204,000.00</td><td class='center-cell'>INR 480,000.00</td><td class='center-cell'>INR 516,000.00</td><td class='center-cell' style='font-weight:700'>INR 29,692,800.00</td></tr><tr><td>Tushar Joshi</td><td class='center-cell'>INR 960,000.00</td><td class='center-cell'>INR 13,560,000.00</td><td class='center-cell'>INR 0.00</td><td class='center-cell'>INR 6,240,000.00</td><td class='center-cell'>INR 11,448,001.08</td><td class='center-cell'>INR 1,068,000.00</td><td class='center-cell'>INR 1,146,000.00</td><td class='center-cell' style='font-weight:700'>INR 34,422,001.08</td></tr><tr><td>Vaishak Mohan</td><td class='center-cell'>INR 1,320,000.00</td><td class='center-cell'>INR 6,120,000.00</td><td class='center-cell'>INR 3,648,000.00</td><td class='center-cell'>INR 9,000,000.00</td><td class='center-cell'>INR 4,200,000.00</td><td class='center-cell'>INR 1,200,000.00</td><td class='center-cell'>INR 0.00</td><td class='center-cell' style='font-weight:700'>INR 25,488,000.00</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>INR 2,280,000.00</td><td class='center-cell'>INR 45,276,000.00</td><td class='center-cell'>INR 13,308,000.00</td><td class='center-cell'>INR 30,268,800.00</td><td class='center-cell'>INR 36,432,001.08</td><td class='center-cell'>INR 3,768,001.08</td><td class='center-cell'>INR 1,662,000.00</td><td class='center-cell'>INR 132,994,802.16</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8qXEAT/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">WoW Pitch OND'26</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">2</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>9/27/2026 - 10/3/2026</th><th class='center-cell'>Total</th></tr><tr><td>Rahul Patel</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>1</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>1</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>2</td><td class='center-cell'>2</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8nJEAT/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">OND'26 Lead Funnel</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">62</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>Unqualified</th><th class='center-cell'>Open</th><th class='center-cell'>Converted</th><th class='center-cell'>Total</th></tr><tr><td>gaurav1 Panchal</td><td class='center-cell'>1</td><td class='center-cell'>15</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>16</td></tr><tr><td>Rahul Patel</td><td class='center-cell'>0</td><td class='center-cell'>5</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>6</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>1</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>14</td></tr><tr><td>Tushar Joshi</td><td class='center-cell'>0</td><td class='center-cell'>14</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>14</td></tr><tr><td>Vaishak Mohan</td><td class='center-cell'>0</td><td class='center-cell'>12</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>12</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>2</td><td class='center-cell'>59</td><td class='center-cell'>1</td><td class='center-cell'>62</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8ddEAD/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div>
+    <div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">Opp Funnel OND'26</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">INR 132,994,802.16</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>Prospecting</th><th class='center-cell'>Pitch</th><th class='center-cell'>Closed Lost</th><th class='center-cell'>Pre Audit</th><th class='center-cell'>Audit Done</th><th class='center-cell'>Agreement Shared</th><th class='center-cell'>Agreement signed</th><th class='center-cell'>Total</th></tr><tr><td>gaurav1 Panchal</td><td class='center-cell'>INR 0.00</td><td class='center-cell'>INR 10,200,000.00</td><td class='center-cell'>INR 4,260,000.00</td><td class='center-cell'>INR 7,080,000.00</td><td class='center-cell'>INR 13,080,000.00</td><td class='center-cell'>INR 1,020,001.08</td><td class='center-cell'>INR 0.00</td><td class='center-cell' style='font-weight:700'>INR 35,640,001.08</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>INR 0.00</td><td class='center-cell'>INR 12,996,000.00</td><td class='center-cell'>INR 3,708,000.00</td><td class='center-cell'>INR 5,788,800.00</td><td class='center-cell'>INR 6,204,000.00</td><td class='center-cell'>INR 480,000.00</td><td class='center-cell'>INR 516,000.00</td><td class='center-cell' style='font-weight:700'>INR 29,692,800.00</td></tr><tr><td>Tushar Joshi</td><td class='center-cell'>INR 960,000.00</td><td class='center-cell'>INR 13,560,000.00</td><td class='center-cell'>INR 960,000.00</td><td class='center-cell'>INR 5,760,000.00</td><td class='center-cell'>INR 10,968,001.08</td><td class='center-cell'>INR 1,068,000.00</td><td class='center-cell'>INR 1,146,000.00</td><td class='center-cell' style='font-weight:700'>INR 34,422,001.08</td></tr><tr><td>Vaishak Mohan</td><td class='center-cell'>INR 1,320,000.00</td><td class='center-cell'>INR 6,120,000.00</td><td class='center-cell'>INR 4,248,000.00</td><td class='center-cell'>INR 9,000,000.00</td><td class='center-cell'>INR 3,600,000.00</td><td class='center-cell'>INR 1,200,000.00</td><td class='center-cell'>INR 0.00</td><td class='center-cell' style='font-weight:700'>INR 25,488,000.00</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>INR 2,280,000.00</td><td class='center-cell'>INR 45,276,000.00</td><td class='center-cell'>INR 14,868,000.00</td><td class='center-cell'>INR 29,788,800.00</td><td class='center-cell'>INR 35,352,001.08</td><td class='center-cell'>INR 3,768,001.08</td><td class='center-cell'>INR 1,662,000.00</td><td class='center-cell'>INR 132,994,802.16</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8qXEAT/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">WoW Pitch OND'26</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">2</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>9/27/2026 - 10/3/2026</th><th class='center-cell'>Total</th></tr><tr><td>Rahul Patel</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>1</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>1</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>2</td><td class='center-cell'>2</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8nJEAT/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div><div class="chart-card" style="margin-bottom:20px;overflow-x:auto;"><h2 style="margin-top:0;font-size:16px">OND'26 Lead Funnel</h2><div class="stat-card" style="margin-bottom:14px;max-width:260px"><div class="num">64</div><div class="label">Grand Total</div></div><table><tr><th>Owner</th><th class='center-cell'>Unqualified</th><th class='center-cell'>Open</th><th class='center-cell'>Converted</th><th class='center-cell'>Total</th></tr><tr><td>gaurav1 Panchal</td><td class='center-cell'>1</td><td class='center-cell'>16</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>17</td></tr><tr><td>Rahul Patel</td><td class='center-cell'>0</td><td class='center-cell'>5</td><td class='center-cell'>1</td><td class='center-cell' style='font-weight:700'>6</td></tr><tr><td>Trishun Tripathi</td><td class='center-cell'>1</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>14</td></tr><tr><td>Tushar Joshi</td><td class='center-cell'>0</td><td class='center-cell'>14</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>14</td></tr><tr><td>Vaishak Mohan</td><td class='center-cell'>0</td><td class='center-cell'>13</td><td class='center-cell'>0</td><td class='center-cell' style='font-weight:700'>13</td></tr><tr class='total-row'><td>Total</td><td class='center-cell'>2</td><td class='center-cell'>61</td><td class='center-cell'>1</td><td class='center-cell'>64</td></tr></table><a href="https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8ddEAD/view?queryScope=userFolders" target="_blank" rel="noopener" style="display:inline-block;background:var(--navy);color:white;text-decoration:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600">Open in Salesforce →</a></div>
   </div>
 
 </main>
-<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 04 Oct 2026 16:25 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
+<footer>GoKwik · Kwik Ads · Live from Salesforce · Auto-synced 04 Oct 2026 18:39 UTC · Filtered to team: Gaurav, Rahul, Trishun, Tushar, Vaishak · Never manually edit this file — it is overwritten on every sync</footer>
 <script>
   document.querySelectorAll('.leadtab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -705,7 +634,7 @@
 
   Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Calibri, sans-serif";
 
-  const CHART_DATA = {"focus": {"OND": {"label": "OND", "targetVsAchieved": {"labels": ["OND Target", "Achieved So Far", "October", "November", "December"], "values": [70000000, 0, 0, 0, 0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Tushar", "Vaishak"], "values": [0, 0, 0, 0], "remaining": [14000000, 14000000, 14000000, 14000000], "pcts": [0.0, 0.0, 0.0, 0.0], "target": 14000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 57, 0, 0, 1], "pcts": [15.9, 82.6, 0.0, 0.0, 1.4]}}, "JAS": {"label": "JAS", "targetVsAchieved": {"labels": ["JAS Target", "Achieved So Far", "July", "August", "September"], "values": [72000000, 39031000.0, 17559000.0, 11367000.0, 10105000.0]}, "byOwner": {"labels": ["Trishun", "Gaurav", "Tushar", "Vaishak"], "values": [13884000.0, 11859000.0, 6872000.0, 6416000.0], "remaining": [4116000.0, 6141000.0, 11128000.0, 11584000.0], "pcts": [77.1, 65.9, 38.2, 35.6], "target": 18000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [1726, 95, 56, 123, 590], "pcts": [66.6, 3.7, 2.2, 4.7, 22.8]}}}, "leadPeriods": ["QDR", "October", "November", "December"], "leadFunnelByPeriod": {"QDR": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 57, 0, 0, 1]}, "October": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 57, 0, 0, 1]}, "November": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}, "December": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"], "values": [540000.0, 0, 0, 0], "weighted": [27000.0, 0.0, 0.0, 0.0]}};
+  const CHART_DATA = {"focus": {"OND": {"label": "OND", "targetVsAchieved": {"labels": ["OND Target", "Achieved So Far", "October", "November", "December"], "values": [70000000, 0, 0, 0, 0]}, "byOwner": {"labels": ["Gaurav", "Trishun", "Tushar", "Vaishak"], "values": [0, 0, 0, 0], "remaining": [18000000, 18000000, 18000000, 18000000], "pcts": [0.0, 0.0, 0.0, 0.0], "target": 18000000}, "leadFunnel": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 59, 0, 0, 1], "pcts": [15.5, 83.1, 0.0, 0.0, 1.4]}}}, "leadPeriods": ["QDR", "October", "November", "December"], "leadFunnelByPeriod": {"QDR": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 59, 0, 0, 1]}, "October": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [11, 59, 0, 0, 1]}, "November": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}, "December": {"labels": ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"], "values": [0, 0, 0, 0, 0]}}, "pipelineStages": {"labels": ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"], "values": [540000.0, 0, 0, 0], "weighted": [27000.0, 0.0, 0.0, 0.0]}};
   const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
 
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
@@ -785,7 +714,6 @@
     });
   }
   initFocusCharts('OND', CHART_DATA.focus.OND);
-  initFocusCharts('', CHART_DATA.focus.JAS);
 
   CHART_DATA.leadPeriods.forEach(period => {
     const canvasId = 'leadChart' + period;
