@@ -38,9 +38,9 @@ QUARTER_MONTHS = {
 FOCUS_YEAR = 2026
 JAS_TARGET = 7_20_00_000  # Rs 7.2 Cr
 INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
-# OND 2026 targets. ASSUMPTION: Rs 7 Cr team target (the number being chased); the
+# OND 2026 targets: Rs 9 Cr team target; the
 # individual target per POC is Rs 1.8 Cr. Edit these two lines to change.
-OND_TARGET = 7_00_00_000
+OND_TARGET = 9_00_00_000
 OND_INDIVIDUAL_TARGET = 1_80_00_000
 
 # --- POC Focus Areas tab: plan assumptions to reach the individual target ---
@@ -401,23 +401,32 @@ def build_dashboard():
     today = date.today()
 
     # ================= PER-QUARTER FOCUS DATA (OND live, JAS frozen) =================
-    def _hist_by_owner(stage, start_s, end_s):
-        """Distinct opportunities that moved into `stage` in the window (regardless of later stage), per owner."""
+    def _stage_entries_by_owner(start_s, end_s):
+        """Real stage moves from Salesforce field history (OldValue -> NewValue), per owner.
+
+        Counts distinct opportunities that MOVED INTO 'Pitch' / 'Audit Done' within [start, end).
+        Why not OpportunityHistory: it also logs a row when Amount / Close Date change while an
+        opportunity sits in a stage, so bulk updates inflate the counts. Moves out of Closed Lost
+        (restores / re-opens) are not counted as new pitches or audits.
+        """
         q = f"""
-            SELECT OpportunityId, Opportunity.Owner.Name
-            FROM OpportunityHistory
-            WHERE StageName = '{stage}'
+            SELECT OpportunityId, OldValue, NewValue, Opportunity.Owner.Name
+            FROM OpportunityFieldHistory
+            WHERE Field = 'StageName'
               AND CreatedDate >= {start_s}T00:00:00Z
               AND CreatedDate < {end_s}T00:00:00Z
               AND Opportunity.RecordType.Name = 'Kwik Ads'
               AND Opportunity.Owner.Name IN ('{owner_names_sql}')
         """
-        seen = defaultdict(set)
+        seen = {"Pitch": defaultdict(set), "Audit Done": defaultdict(set)}
         for r in query_all(sf, q):
+            new_stage = r.get("NewValue")
+            if new_stage not in seen or r.get("OldValue") == "Closed Lost":
+                continue
             owner = owner_short(((r.get("Opportunity") or {}).get("Owner") or {}).get("Name"))
             if owner:
-                seen[owner].add(r["OpportunityId"])
-        return {o: len(ids) for o, ids in seen.items()}
+                seen[new_stage][owner].add(r["OpportunityId"])
+        return {stage: {o: len(ids) for o, ids in by_owner.items()} for stage, by_owner in seen.items()}
 
     def _empty_lead_agg():
         return {"buckets": defaultdict(int), "by_owner": defaultdict(lambda: defaultdict(int)), "total": 0}
@@ -462,8 +471,9 @@ def build_dashboard():
         for o, (c, a) in bucket["owner_totals"].items():
             if o != "Rahul":
                 ach[o] = [c, a]
-        pitches_by = _hist_by_owner("Pitch", start_s, end_s)
-        audits_by = _hist_by_owner("Audit Done", start_s, end_s)
+        _entries = _stage_entries_by_owner(start_s, end_s)
+        pitches_by = _entries["Pitch"]
+        audits_by = _entries["Audit Done"]
         pitches = sum(pitches_by.values())
         audits = sum(audits_by.values())
         qdata[qk] = {
@@ -864,7 +874,7 @@ def build_dashboard():
         <div style="position:absolute;top:0;bottom:0;left:{exp_pos:.1f}%;width:2px;background:var(--navy)" title="Expected by today"></div>
       </div>
       <table>
-        <tr><th>Driver</th><th class='center-cell'>{BASELINE_QUARTER} (last qtr)</th><th class='center-cell'>OND so far</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
+        <tr><th>Driver</th><th class='center-cell'>{BASELINE_QUARTER} (last qtr)</th><th class='center-cell'>OND so far (from 1 Oct)</th><th class='center-cell'>Needed by today</th><th class='center-cell'>OND quarter need</th><th class='center-cell'>Status</th></tr>
         {rows_html}
       </table>
       <div class="focus-callout {fr['sev']}">🔎 Focus: <b>{fr['focus_name']}</b> — {fr['focus_msg']}</div>
@@ -875,7 +885,7 @@ def build_dashboard():
     <p class="section-note">{banner}</p>
     {summary}
     {cards}
-    <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits are counted from Salesforce stage history (opportunities that reached Pitch or Audit Done in the period), so they can differ from the manual tracker.</p>
+    <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits come from Salesforce only: an opportunity counts when it actually moves into the Pitch or Audit Done stage on or after the period start (OND = 1 Oct). Amount or close-date edits and re-opens from Closed Lost are not counted. They can differ from the manual tracker.</p>
   </div>
 """
 
