@@ -2,7 +2,7 @@
 """
 sync_dashboard.py
 Pulls live KwikAds data from Salesforce (filtered to Rahul's team only) and
-regenerates index.html for the GitHub Pages dashboard: JAS quarter focus,
+regenerates index.html for the GitHub Pages dashboard: OND quarter focus (+ frozen JAS tab),
 Target vs Achievement (7.2 Cr goal), Agreement Signed pipeline, weighted
 active pipeline (Pitch 5% / Pre Audit 15% / Audit Done 30%), average ticket
 size, per-rep MQL lead funnel, and Till Date with quarterly segregation.
@@ -34,31 +34,56 @@ QUARTER_MONTHS = {
     "JAS": [7, 8, 9],
     "OND": [10, 11, 12],
 }
-FOCUS_QUARTER = "JAS"
 FOCUS_YEAR = 2026
 JAS_TARGET = 7_20_00_000  # Rs 7.2 Cr
 INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
+# OND 2026 targets. ASSUMPTION: Rs 7 Cr team target (the number being chased), split across
+# 5 individual contributors (4 current ICs + Utkrist) = Rs 1.4 Cr each. Edit these two lines to change.
+OND_TARGET = 7_00_00_000
+OND_INDIVIDUAL_TARGET = 1_40_00_000
+
+# Individual contributors shown in "Achievement by Owner" (Rahul is excluded there on request).
+# Add Utkrist here (and to TEAM_OWNERS, with his exact Salesforce Owner.Name) once he starts.
+IC_NAMES = ["Gaurav", "Trishun", "Tushar", "Vaishak"]
+
+# Focus tabs. JAS stays as a frozen quarter; OND is the live "Focus" tab.
+QUARTER_CFG = {
+    "OND": {
+        "label": "OND", "tab_id": "ond", "suffix": "OND",
+        "start": date(2026, 10, 1), "end": date(2027, 1, 1),
+        "months": ["October", "November", "December"],
+        "target": OND_TARGET, "individual_target": OND_INDIVIDUAL_TARGET,
+    },
+    "JAS": {
+        "label": "JAS", "tab_id": "jas", "suffix": "",
+        "start": date(2026, 7, 1), "end": date(2026, 10, 1),
+        "months": ["July", "August", "September"],
+        "target": JAS_TARGET, "individual_target": INDIVIDUAL_TARGET,
+    },
+}
+LEAD_FUNNEL_QUARTER = "OND"   # Lead Funnel tab talks about OND leads only
+PIPELINE_FROM = date(2026, 10, 1)  # Active Pipeline tab shows opportunities created from this date (OND)
 
 # Salesforce Reports to surface on the "SF Reports" tab.
 # id = the 18-char Report Id from the Lightning URL; url = the full link to open it in SF.
 SF_REPORTS = [
     {
-        "name": "Opp Funnel JAS'26",
-        "id": "00Ofu000009AWSrEAO",
-        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AWSrEAO/view?queryScope=userFolders",
+        "name": "Opp Funnel OND'26",
+        "id": "00Ofu00000AJ8qXEAT",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8qXEAT/view?queryScope=userFolders",
         "use_count": False,
         "exclude_owners": ["Rahul Patel"],
     },
     {
-        "name": "WoW Pitch JAS'26",
-        "id": "00Ofu000009AW6HEAW",
-        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AW6HEAW/view?queryScope=userFolders",
+        "name": "WoW Pitch OND'26",
+        "id": "00Ofu00000AJ8nJEAT",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8nJEAT/view?queryScope=userFolders",
         "use_count": True,  # show count of pitches, not Sum of Amount
     },
     {
-        "name": "JAS'26 Lead Funnel",
-        "id": "00Ofu000009AUywEAG",
-        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu000009AUywEAG/view?queryScope=userFolders",
+        "name": "OND'26 Lead Funnel",
+        "id": "00Ofu00000AJ8ddEAD",
+        "url": "https://gokwikcommercesolutionsprivatelimi.lightning.force.com/lightning/r/sObject/00Ofu00000AJ8ddEAD/view?queryScope=userFolders",
         "use_count": False,
     },
 ]
@@ -301,21 +326,7 @@ def build_dashboard():
             quarter_buckets[key]["owner_totals"][owner][1] += arr
             quarter_buckets[key]["total"] += arr
 
-    focus_key = f"{FOCUS_QUARTER}-{FOCUS_YEAR}"
-    focus_data = quarter_buckets.get(focus_key, {"rows": [], "owner_totals": {}, "total": 0})
-
-    focus_month_buckets = defaultdict(lambda: {"rows": [], "total": 0})
-    for acct, owner, close_date, arr in focus_data["rows"]:
-        month = datetime.strptime(close_date, "%Y-%m-%d").strftime("%B")
-        focus_month_buckets[month]["rows"].append((acct, owner, close_date, arr))
-        focus_month_buckets[month]["total"] += arr
-
-    # Average ticket size (JAS) — overall and per owner
-    jas_deal_count = len(focus_data["rows"])
-    jas_avg_ticket_overall = (focus_data["total"] / jas_deal_count) if jas_deal_count else 0
-    jas_avg_ticket_by_owner = {
-        o: (arr / count if count else 0) for o, (count, arr) in focus_data["owner_totals"].items()
-    } if focus_data["owner_totals"] else {}
+    focus_key = f"OND-{FOCUS_YEAR}"  # highlighted as "(current)" in the Till Date quarterly table
 
     # ================= AGREEMENT SIGNED (ready to go live soon) =================
     agreement_q = f"""
@@ -342,7 +353,7 @@ def build_dashboard():
 
     # ================= WEIGHTED ACTIVE PIPELINE: Pitch / Pre Audit / Audit Done =================
     pipeline_q = f"""
-        SELECT Owner.Name, StageName, Kwik_Ads_Expected_ARR__c
+        SELECT Owner.Name, StageName, Kwik_Ads_Expected_ARR__c, CreatedDate
         FROM Opportunity
         WHERE RecordType.Name = 'Kwik Ads'
           AND StageName IN ('Pitch', 'Pre Audit', 'Audit Done', 'Agreement Signed')
@@ -355,12 +366,19 @@ def build_dashboard():
     owner_stage_matrix = defaultdict(lambda: {s: {"count": 0, "earr": 0} for s in STAGE_WEIGHTS})
     pipeline_total_count = 0
     pipeline_total_arr = 0
+    carry_count = 0   # active opportunities created before OND (excluded from this tab)
+    carry_arr = 0
+    pipeline_from_str = PIPELINE_FROM.isoformat()
     for r in pipeline_records:
         owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
         stage = r.get("StageName")
         if owner is None or stage not in STAGE_WEIGHTS:
             continue
         arr = r.get("Kwik_Ads_Expected_ARR__c") or 0
+        if (r.get("CreatedDate") or "")[:10] < pipeline_from_str:
+            carry_count += 1
+            carry_arr += arr
+            continue
         stage_summary[stage]["count"] += 1
         stage_summary[stage]["earr"] += arr
         owner_stage_matrix[owner][stage]["count"] += 1
@@ -373,87 +391,78 @@ def build_dashboard():
         stage_summary[s]["weighted"] = stage_summary[s]["earr"] * STAGE_WEIGHTS[s]
 
     today = date.today()
-    month_start = today.replace(day=1).isoformat()
 
-    # ================= AUDITS THIS MONTH: moved to Audit Done stage this month, =================
-    # regardless of current stage (even if later Lost or moved elsewhere).
-    # Uses the standard OpportunityHistory object which logs every stage change.
-    audit_hist_q = f"""
-        SELECT OpportunityId
-        FROM OpportunityHistory
-        WHERE StageName = 'Audit Done'
-          AND CreatedDate >= {month_start}T00:00:00Z
-          AND Opportunity.RecordType.Name = 'Kwik Ads'
-          AND Opportunity.Owner.Name IN ('{owner_names_sql}')
-    """
-    audits_this_month = len(set(r["OpportunityId"] for r in query_all(sf, audit_hist_q)))
-
-    # ================= PITCHES THIS MONTH: moved to Pitch stage this month, =================
-    # same "regardless of later stage" logic, for consistency.
-    pitch_hist_q = f"""
-        SELECT OpportunityId
-        FROM OpportunityHistory
-        WHERE StageName = 'Pitch'
-          AND CreatedDate >= {month_start}T00:00:00Z
-          AND Opportunity.RecordType.Name = 'Kwik Ads'
-          AND Opportunity.Owner.Name IN ('{owner_names_sql}')
-    """
-    pitches_this_month = len(set(r["OpportunityId"] for r in query_all(sf, pitch_hist_q)))
-
-    golives_this_month = sum(1 for _, _, cd, _ in till_date_rows if cd and cd >= month_start)
-    conversion_rate = (golives_this_month / audits_this_month * 100) if audits_this_month else 0
-
-    # ================= MQL LEAD FUNNEL (this month), team only, with per-rep breakdown =================
-    lead_q = f"""
-        SELECT Id, Status, IsConverted, Owner.Name
-        FROM Lead
-        WHERE CreatedDate >= {month_start}T00:00:00Z
-          AND Owner.Name IN ('{owner_names_sql}')
-    """
-    lead_records = query_all(sf, lead_q)
-    lead_buckets = defaultdict(int)
-    lead_by_owner = defaultdict(lambda: defaultdict(int))
-    for r in lead_records:
-        owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
-        b = bucket_lead_status(r.get("Status"), r.get("IsConverted"))
-        lead_buckets[b] += 1
-        if owner:
-            lead_by_owner[owner]["Total"] += 1
-            lead_by_owner[owner][b] += 1
-    total_leads = len(lead_records)
-
-    def pct(n):
-        return f"{(n/total_leads*100):.1f}%" if total_leads else "0%"
-
-    # ================= Lead Funnel TAB: QDR (quarter-to-date) + month-wise breakdown =================
-    # Separate from the "this month" figures above (which still drive the JAS tab's quick-glance chart).
-    jas_start_str = date(FOCUS_YEAR, 7, 1).isoformat()
-    jas_end_str = date(FOCUS_YEAR, 10, 1).isoformat()
-    qdr_lead_q = f"""
-        SELECT Id, Status, IsConverted, Owner.Name, CreatedDate
-        FROM Lead
-        WHERE CreatedDate >= {jas_start_str}T00:00:00Z
-          AND CreatedDate < {jas_end_str}T00:00:00Z
-          AND Owner.Name IN ('{owner_names_sql}')
-    """
-    qdr_lead_records = query_all(sf, qdr_lead_q)
+    # ================= PER-QUARTER FOCUS DATA (OND live, JAS frozen) =================
+    def _hist_count(stage, start_s, end_s):
+        """Opportunities that moved into `stage` in the window, regardless of later stage."""
+        q = f"""
+            SELECT OpportunityId
+            FROM OpportunityHistory
+            WHERE StageName = '{stage}'
+              AND CreatedDate >= {start_s}T00:00:00Z
+              AND CreatedDate < {end_s}T00:00:00Z
+              AND Opportunity.RecordType.Name = 'Kwik Ads'
+              AND Opportunity.Owner.Name IN ('{owner_names_sql}')
+        """
+        return len(set(r["OpportunityId"] for r in query_all(sf, q)))
 
     def _empty_lead_agg():
         return {"buckets": defaultdict(int), "by_owner": defaultdict(lambda: defaultdict(int)), "total": 0}
 
-    lead_agg = {"QDR": _empty_lead_agg(), "July": _empty_lead_agg(), "August": _empty_lead_agg(), "September": _empty_lead_agg()}
+    def build_lead_agg(start_s, end_s, month_names):
+        q = f"""
+            SELECT Id, Status, IsConverted, Owner.Name, CreatedDate
+            FROM Lead
+            WHERE CreatedDate >= {start_s}T00:00:00Z
+              AND CreatedDate < {end_s}T00:00:00Z
+              AND Owner.Name IN ('{owner_names_sql}')
+        """
+        agg = {"QDR": _empty_lead_agg()}
+        for m in month_names:
+            agg[m] = _empty_lead_agg()
+        for r in query_all(sf, q):
+            owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
+            b = bucket_lead_status(r.get("Status"), r.get("IsConverted"))
+            created = r.get("CreatedDate")
+            month_name = datetime.strptime(created[:10], "%Y-%m-%d").strftime("%B") if created else None
+            for key in (["QDR"] + ([month_name] if month_name in agg else [])):
+                agg[key]["buckets"][b] += 1
+                agg[key]["total"] += 1
+                if owner:
+                    agg[key]["by_owner"][owner]["Total"] += 1
+                    agg[key]["by_owner"][owner][b] += 1
+        return agg
 
-    for r in qdr_lead_records:
-        owner = owner_short(r["Owner"]["Name"] if r.get("Owner") else None)
-        b = bucket_lead_status(r.get("Status"), r.get("IsConverted"))
-        created = r.get("CreatedDate")
-        month_name = datetime.strptime(created[:10], "%Y-%m-%d").strftime("%B") if created else None
-        for key in (["QDR"] + ([month_name] if month_name in lead_agg else [])):
-            lead_agg[key]["buckets"][b] += 1
-            lead_agg[key]["total"] += 1
-            if owner:
-                lead_agg[key]["by_owner"][owner]["Total"] += 1
-                lead_agg[key]["by_owner"][owner][b] += 1
+    qdata = {}
+    lead_agg_by_q = {}
+    for qk, cfg in QUARTER_CFG.items():
+        start_s, end_s = cfg["start"].isoformat(), cfg["end"].isoformat()
+        bucket = quarter_buckets.get(f"{qk}-{FOCUS_YEAR}", {"rows": [], "owner_totals": {}, "total": 0})
+        month_buckets = defaultdict(lambda: {"rows": [], "total": 0})
+        for acct, owner, close_date, arr in bucket["rows"]:
+            m = datetime.strptime(close_date, "%Y-%m-%d").strftime("%B")
+            month_buckets[m]["rows"].append((acct, owner, close_date, arr))
+            month_buckets[m]["total"] += arr
+        deal_count = len(bucket["rows"])
+        # Achievement by owner: all ICs always listed (zero until their first Go-Live); Rahul excluded.
+        ach = {o: [0, 0] for o in IC_NAMES}
+        for o, (c, a) in bucket["owner_totals"].items():
+            if o != "Rahul":
+                ach[o] = [c, a]
+        pitches = _hist_count("Pitch", start_s, end_s)
+        audits = _hist_count("Audit Done", start_s, end_s)
+        qdata[qk] = {
+            "rows": bucket["rows"], "total": bucket["total"], "deal_count": deal_count,
+            "months": month_buckets, "avg_ticket": (bucket["total"] / deal_count) if deal_count else 0,
+            "ach": ach, "pitches": pitches, "audits": audits,
+            "conv": (deal_count / audits * 100) if audits else 0,
+            "progress_pct": round(min(bucket["total"] / cfg["target"] * 100, 100), 1) if cfg["target"] else 0,
+        }
+        lead_agg_by_q[qk] = build_lead_agg(start_s, end_s, cfg["months"])
+
+    lead_agg = lead_agg_by_q[LEAD_FUNNEL_QUARTER]
+    lead_months = QUARTER_CFG[LEAD_FUNNEL_QUARTER]["months"]
+    lead_periods = ["QDR"] + lead_months
 
     def pct_of(n, total):
         return f"{(n/total*100):.1f}%" if total else "0%"
@@ -521,24 +530,6 @@ def build_dashboard():
         html += "</table>"
         return html
 
-    def render_month_sections():
-        html = ""
-        for month in ["July", "August", "September"]:
-            data = focus_month_buckets.get(month)
-            if not data or not data["rows"]:
-                html += f"""
-                <div class="empty-state">
-                  <div class="icon">🔮</div>
-                  <b>{month} {FOCUS_YEAR} — Not started yet</b>
-                  <p style="margin:4px 0 0">Data will appear here once brands go live this month</p>
-                </div>"""
-                continue
-            html += f"<h2>{month} {FOCUS_YEAR} Go-Live — {len(data['rows'])} Brands · {fmt_currency(data['total'])}</h2>"
-            html += "<table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr>"
-            html += render_brand_rows(data["rows"])
-            html += f"<tr class='total-row'><td colspan='3'>{month} Total</td><td class='num-cell'>{fmt_currency(data['total'])}</td></tr></table>"
-        return html
-
     def render_quarterly_breakdown():
         html = "<table><tr><th>Quarter</th><th class='center-cell'>Brands</th><th style='text-align:right'>Booked ARR</th></tr>"
         for key, data in sorted(quarter_buckets.items()):
@@ -551,16 +542,6 @@ def build_dashboard():
             html += f"<tr {style}><td>{label}</td><td class='center-cell'>{len(data['rows'])}</td><td class='num-cell'>{fmt_currency(data['total'])}</td></tr>"
         html += f"<tr class='total-row'><td>Grand Total</td><td class='center-cell'>{len(till_date_rows)}</td><td class='num-cell'>{fmt_currency(total_earr_alltime)}</td></tr>"
         html += "</table>"
-        return html
-
-    def render_lead_owner_table():
-        cols = ["Total", "Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
-        html = "<table><tr><th>Owner</th>" + "".join(f"<th class='center-cell'>{c}</th>" for c in cols) + "</tr>\n"
-        for owner in sorted(lead_by_owner.keys()):
-            html += f"<tr><td>{owner}</td>" + "".join(f"<td class='center-cell'>{lead_by_owner[owner].get(c, 0)}</td>" for c in cols) + "</tr>\n"
-        totals_row = "<tr class='total-row'><td>Team Total</td>" + f"<td class='center-cell'>{total_leads}</td>" + "".join(f"<td class='center-cell'>{lead_buckets.get(c,0)}</td>" for c in cols[1:]) + "</tr>"
-        pct_row = "<tr><td><i>% of Total</i></td><td class='center-cell'>100%</td>" + "".join(f"<td class='center-cell'>{pct(lead_buckets.get(c,0))}</td>" for c in cols[1:]) + "</tr>"
-        html += totals_row + pct_row + "</table>"
         return html
 
     def render_lead_stat_cards(agg):
@@ -635,41 +616,138 @@ def build_dashboard():
         html += "</table>"
         return html
 
+    # ---- Per-quarter focus tab + lead funnel tab renderers ----
+    def render_month_sections(qk):
+        cfg, d = QUARTER_CFG[qk], qdata[qk]
+        html = ""
+        for month in cfg["months"]:
+            data = d["months"].get(month)
+            if not data or not data["rows"]:
+                html += f"""
+                <div class="empty-state">
+                  <div class="icon">🔮</div>
+                  <b>{month} {FOCUS_YEAR} — Not started yet</b>
+                  <p style="margin:4px 0 0">Data will appear here once brands go live this month</p>
+                </div>"""
+                continue
+            html += f"<h2>{month} {FOCUS_YEAR} Go-Live — {len(data['rows'])} Brands · {fmt_currency(data['total'])}</h2>"
+            html += "<table><tr><th>Brand</th><th>Owner</th><th>Date</th><th style='text-align:right'>Booked ARR</th></tr>"
+            html += render_brand_rows(data["rows"])
+            html += f"<tr class='total-row'><td colspan='3'>{month} Total</td><td class='num-cell'>{fmt_currency(data['total'])}</td></tr></table>"
+        return html
+
+    def render_focus_tab(qk, active=False):
+        cfg, d = QUARTER_CFG[qk], qdata[qk]
+        ql, sfx = cfg["label"], cfg["suffix"]
+        return f"""
+  <div class="tab-content{' active' if active else ''}" id="{cfg['tab_id']}">
+
+    <div class="chart-card">
+      <h2 style="margin-top:0">🎯 {ql} {FOCUS_YEAR} — Target vs Achievement</h2>
+      <div class="progress-wrap">
+        <div class="progress-fill" style="width:{d['progress_pct']}%">{d['progress_pct']}%</div>
+      </div>
+      <div class="target-summary">
+        <div><div class="big">{fmt_currency(cfg['target'])}</div><div class="lbl">Target ({ql})</div></div>
+        <div><div class="big" style="color:var(--gold)">{fmt_currency(d['total'])}</div><div class="lbl">Achieved So Far</div></div>
+        <div><div class="big" style="color:var(--red)">{fmt_currency(max(cfg['target'] - d['total'], 0))}</div><div class="lbl">Gap Remaining</div></div>
+        <div><div class="big" style="color:var(--purple)">{fmt_currency(agreement_total)}</div><div class="lbl">Agreement Signed (soon)</div></div>
+      </div>
+      <canvas id="targetChart{sfx}" height="140"></canvas>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card"><div class="icon-tag">🏆</div><div class="num">{d['deal_count']}</div><div class="label">Total Go-Live ({ql})</div></div>
+      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">{d['pitches']}</div><div class="label">Pitches ({ql})</div></div>
+      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">{d['audits']}</div><div class="label">Audits Done ({ql})</div></div>
+      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">{d['conv']:.1f}%</div><div class="label">Audit → Go-Live Conv.</div></div>
+      <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">{fmt_currency(d['avg_ticket'])}</div><div class="label">Avg Ticket Size ({ql})</div></div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2 style="margin-top:0">Achievement by Owner</h2>
+        <canvas id="ownerChart{sfx}"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
+        <canvas id="leadChart{sfx}"></canvas>
+      </div>
+    </div>
+
+    <div class="owner-row">
+      {render_achievement_target_cards(d['ach'], cfg['individual_target'])}
+    </div>
+
+    <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
+    <div class="stat-row">
+      <div class="stat-card purple"><div class="num">{len(agreement_rows)}</div><div class="label">Brands Signed</div></div>
+      <div class="stat-card money"><div class="num">{fmt_currency(agreement_total)}</div><div class="label">EARR (Signed, Pending Go-Live)</div></div>
+    </div>
+    {render_owner_table(agreement_by_owner, len(agreement_rows), agreement_total) if agreement_rows else '<div class="empty-state"><div class="icon">📭</div><b>No brands currently at Agreement Signed</b></div>'}
+
+    {render_month_sections(qk)}
+  </div>
+"""
+
+    def render_lead_tab_panels():
+        btns = "".join(
+            f'<button class="leadtab-btn{" active" if pd == "QDR" else ""}" data-leadtab="{pd}">{"QDR (Quarter)" if pd == "QDR" else pd}</button>'
+            for pd in lead_periods
+        )
+        panels = ""
+        for pd in lead_periods:
+            title = "QDR (Quarter-to-Date)" if pd == "QDR" else pd
+            panels += f"""
+    <div class="leadtab-panel{' active' if pd == 'QDR' else ''}" id="leadtab-{pd}">
+      {render_lead_stat_cards(lead_agg[pd])}
+      <div class="chart-card">
+        <h2 style="margin-top:0">Lead Status Breakdown — {title}</h2>
+        <canvas id="leadChart{pd}"></canvas>
+      </div>
+      <h2>By Rep</h2>
+      {render_lead_by_rep_table(lead_agg[pd])}
+    </div>
+"""
+        return f'<div class="month-selector">{btns}</div>' + panels
+
     # ---- Chart data (JS-side Chart.js) ----
-    owner_labels = [o for o, _ in sorted(focus_data["owner_totals"].items(), key=lambda x: -x[1][1])] if focus_data["owner_totals"] else []
-    owner_values = [focus_data["owner_totals"][o][1] for o in owner_labels]
-
-    # "Achievement by Owner" (chart + cards directly under it) excludes Rahul on request —
-    # every other section (Till Date, Pipeline, Lead Funnel) still includes him.
-    achievement_owner_totals = {o: v for o, v in focus_data["owner_totals"].items() if o != "Rahul"}
-    achievement_labels = [o for o, _ in sorted(achievement_owner_totals.items(), key=lambda x: -x[1][1])] if achievement_owner_totals else []
-    achievement_values = [achievement_owner_totals[o][1] for o in achievement_labels]
-    achievement_remaining = [max(INDIVIDUAL_TARGET - v, 0) for v in achievement_values]
-    achievement_pcts = [round(v / INDIVIDUAL_TARGET * 100, 1) if INDIVIDUAL_TARGET else 0 for v in achievement_values]
-
     lead_labels = ["Unqualified", "Open", "Contacted", "Could Not Connect", "Converted"]
-    lead_values = [lead_buckets.get(l, 0) for l in lead_labels]
-    lead_pcts = [round(v/total_leads*100, 1) if total_leads else 0 for v in lead_values]
+
+    def focus_payload(qk):
+        cfg, d = QUARTER_CFG[qk], qdata[qk]
+        ach_sorted = sorted(d["ach"].items(), key=lambda x: -x[1][1])
+        labels = [o for o, _ in ach_sorted]
+        values = [v[1] for _, v in ach_sorted]
+        ind = cfg["individual_target"]
+        agg = lead_agg_by_q[qk]["QDR"]
+        lv = [agg["buckets"].get(l, 0) for l in lead_labels]
+        tot = agg["total"]
+        return {
+            "label": cfg["label"],
+            "targetVsAchieved": {
+                "labels": [f"{cfg['label']} Target", "Achieved So Far"] + cfg["months"],
+                "values": [cfg["target"], d["total"]] + [d["months"].get(m, {"total": 0})["total"] for m in cfg["months"]],
+            },
+            "byOwner": {
+                "labels": labels, "values": values,
+                "remaining": [max(ind - v, 0) for v in values],
+                "pcts": [round(v / ind * 100, 1) if ind else 0 for v in values],
+                "target": ind,
+            },
+            "leadFunnel": {"labels": lead_labels, "values": lv, "pcts": [round(v / tot * 100, 1) if tot else 0 for v in lv]},
+        }
 
     pipeline_stage_labels = ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"]
     pipeline_stage_values = [stage_summary[s]["earr"] for s in pipeline_stage_labels]
     pipeline_weighted_values = [stage_summary[s]["weighted"] for s in pipeline_stage_labels]
 
-    target_progress_pct = round(min(focus_data["total"] / JAS_TARGET * 100, 100), 1) if JAS_TARGET else 0
-
-    monthly_arr_labels = ["July", "August", "September"]
-    monthly_arr_values = [focus_month_buckets.get(m, {"total": 0})["total"] for m in monthly_arr_labels]
-
     chart_data_json = json.dumps({
-        "targetVsAchieved": {
-            "labels": ["JAS Target", "Achieved So Far"] + monthly_arr_labels,
-            "values": [JAS_TARGET, focus_data["total"]] + monthly_arr_values,
-        },
-        "byOwner": {"labels": achievement_labels, "values": achievement_values, "remaining": achievement_remaining, "pcts": achievement_pcts, "target": INDIVIDUAL_TARGET},
-        "leadFunnel": {"labels": lead_labels, "values": lead_values, "pcts": lead_pcts},
+        "focus": {qk: focus_payload(qk) for qk in QUARTER_CFG},
+        "leadPeriods": lead_periods,
         "leadFunnelByPeriod": {
-            period: {"labels": lead_labels, "values": [agg["buckets"].get(l, 0) for l in lead_labels]}
-            for period, agg in lead_agg.items()
+            pd: {"labels": lead_labels, "values": [lead_agg[pd]["buckets"].get(l, 0) for l in lead_labels]}
+            for pd in lead_periods
         },
         "pipelineStages": {"labels": pipeline_stage_labels, "values": pipeline_stage_values, "weighted": pipeline_weighted_values},
     })
@@ -757,7 +835,8 @@ def build_dashboard():
   <div class="meta">Rahul Patel · rahul.patel@gokwik.co · Auto-synced {generated_at}</div>
 </header>
 <nav>
-  <button class="tab-btn active" data-tab="jas">🎯 JAS {FOCUS_YEAR} (Focus)</button>
+  <button class="tab-btn active" data-tab="ond">🎯 OND {FOCUS_YEAR} (Focus)</button>
+  <button class="tab-btn" data-tab="jas">🏁 JAS {FOCUS_YEAR}</button>
   <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
@@ -765,54 +844,9 @@ def build_dashboard():
 </nav>
 <main>
 
-  <div class="tab-content active" id="jas">
+  {render_focus_tab('OND', True)}
 
-    <div class="chart-card">
-      <h2 style="margin-top:0">🎯 JAS {FOCUS_YEAR} — Target vs Achievement</h2>
-      <div class="progress-wrap">
-        <div class="progress-fill" style="width:{target_progress_pct}%">{target_progress_pct}%</div>
-      </div>
-      <div class="target-summary">
-        <div><div class="big">{fmt_currency(JAS_TARGET)}</div><div class="lbl">Target (JAS)</div></div>
-        <div><div class="big" style="color:var(--gold)">{fmt_currency(focus_data['total'])}</div><div class="lbl">Achieved So Far</div></div>
-        <div><div class="big" style="color:var(--red)">{fmt_currency(max(JAS_TARGET - focus_data['total'], 0))}</div><div class="lbl">Gap Remaining</div></div>
-        <div><div class="big" style="color:var(--purple)">{fmt_currency(agreement_total)}</div><div class="lbl">Agreement Signed (soon)</div></div>
-      </div>
-      <canvas id="targetChart" height="140"></canvas>
-    </div>
-
-    <div class="stat-row">
-      <div class="stat-card"><div class="icon-tag">🏆</div><div class="num">{len(focus_data['rows'])}</div><div class="label">Total Go-Live (JAS)</div></div>
-      <div class="stat-card purple"><div class="icon-tag">📝</div><div class="num">{pitches_this_month}</div><div class="label">Pitches ({today.strftime('%B')})</div></div>
-      <div class="stat-card"><div class="icon-tag">🔍</div><div class="num">{audits_this_month}</div><div class="label">Audits Done ({today.strftime('%B')})</div></div>
-      <div class="stat-card green"><div class="icon-tag">📈</div><div class="num">{conversion_rate:.1f}%</div><div class="label">Audit → Go-Live Conv.</div></div>
-      <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">{fmt_currency(jas_avg_ticket_overall)}</div><div class="label">Avg Ticket Size (JAS)</div></div>
-    </div>
-
-    <div class="chart-row">
-      <div class="chart-card">
-        <h2 style="margin-top:0">Achievement by Owner</h2>
-        <canvas id="ownerChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 style="margin-top:0">MQL Lead Funnel — {today.strftime('%B')}</h2>
-        <canvas id="leadChart"></canvas>
-      </div>
-    </div>
-
-    <div class="owner-row">
-      {render_achievement_target_cards(achievement_owner_totals, INDIVIDUAL_TARGET)}
-    </div>
-
-    <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
-    <div class="stat-row">
-      <div class="stat-card purple"><div class="num">{len(agreement_rows)}</div><div class="label">Brands Signed</div></div>
-      <div class="stat-card money"><div class="num">{fmt_currency(agreement_total)}</div><div class="label">EARR (Signed, Pending Go-Live)</div></div>
-    </div>
-    {render_owner_table(agreement_by_owner, len(agreement_rows), agreement_total) if agreement_rows else '<div class="empty-state"><div class="icon">📭</div><b>No brands currently at Agreement Signed</b></div>'}
-
-    {render_month_sections()}
-  </div>
+  {render_focus_tab('JAS')}
 
   <div class="tab-content" id="tilldate">
     <h2>⭐ Total Go-Live — All Time (Team Only)</h2>
@@ -836,8 +870,9 @@ def build_dashboard():
   </div>
 
   <div class="tab-content" id="pipeline">
-    <h2>🚦 Weighted Active Pipeline (Team Only)</h2>
+    <h2>🚦 Weighted Active Pipeline — OND {FOCUS_YEAR} (Team Only)</h2>
     <p class="section-note">Weighted using stage-conversion assumptions: Pitch 5%, Pre Audit 15%, Audit Done 30%, Agreement Signed 70% (this last figure wasn't specified — adjust in the script if a different rate applies).</p>
+    <p class="section-note">Showing only opportunities created in OND {FOCUS_YEAR} (from {PIPELINE_FROM.strftime('%d %b %Y')}). {carry_count} active opportunities worth {fmt_currency(carry_arr)} created before OND are not included here.</p>
     <div class="stat-row">
       <div class="stat-card"><div class="num">{pipeline_total_count}</div><div class="label">Active Brands</div></div>
       <div class="stat-card money"><div class="num">{fmt_currency(pipeline_total_arr)}</div><div class="label">Raw Pipeline EARR</div></div>
@@ -854,53 +889,8 @@ def build_dashboard():
   </div>
 
   <div class="tab-content" id="leadfunnel">
-    <h2>📊 MQL Lead Funnel (Team Only)</h2>
-    <div class="month-selector">
-      <button class="leadtab-btn active" data-leadtab="QDR">QDR (Quarter)</button>
-      <button class="leadtab-btn" data-leadtab="July">July</button>
-      <button class="leadtab-btn" data-leadtab="August">August</button>
-      <button class="leadtab-btn" data-leadtab="September">September</button>
-    </div>
-
-    <div class="leadtab-panel active" id="leadtab-QDR">
-      {render_lead_stat_cards(lead_agg['QDR'])}
-      <div class="chart-card">
-        <h2 style="margin-top:0">Lead Status Breakdown — QDR (Quarter-to-Date)</h2>
-        <canvas id="leadChartQDR"></canvas>
-      </div>
-      <h2>By Rep</h2>
-      {render_lead_by_rep_table(lead_agg['QDR'])}
-    </div>
-
-    <div class="leadtab-panel" id="leadtab-July">
-      {render_lead_stat_cards(lead_agg['July'])}
-      <div class="chart-card">
-        <h2 style="margin-top:0">Lead Status Breakdown — July</h2>
-        <canvas id="leadChartJuly"></canvas>
-      </div>
-      <h2>By Rep</h2>
-      {render_lead_by_rep_table(lead_agg['July'])}
-    </div>
-
-    <div class="leadtab-panel" id="leadtab-August">
-      {render_lead_stat_cards(lead_agg['August'])}
-      <div class="chart-card">
-        <h2 style="margin-top:0">Lead Status Breakdown — August</h2>
-        <canvas id="leadChartAugust"></canvas>
-      </div>
-      <h2>By Rep</h2>
-      {render_lead_by_rep_table(lead_agg['August'])}
-    </div>
-
-    <div class="leadtab-panel" id="leadtab-September">
-      {render_lead_stat_cards(lead_agg['September'])}
-      <div class="chart-card">
-        <h2 style="margin-top:0">Lead Status Breakdown — September</h2>
-        <canvas id="leadChartSeptember"></canvas>
-      </div>
-      <h2>By Rep</h2>
-      {render_lead_by_rep_table(lead_agg['September'])}
-    </div>
+    <h2>📊 MQL Lead Funnel — OND {FOCUS_YEAR} (Team Only)</h2>
+    {render_lead_tab_panels()}
 
     <p class="section-note">Bucketing is inferred from the Lead.Status text field — verify these categories match your org's actual picklist values if numbers look off. Months with no leads yet will show all zeros.</p>
   </div>
@@ -936,83 +926,86 @@ def build_dashboard():
   const CHART_DATA = {chart_data_json};
   const NAVY = '#1E2761', GOLD = '#C98A2C', ICE = '#CADCFC', SLATE = '#3A3F55', GREEN='#1F7A1F', RED='#B33A3A', PURPLE='#6C4FB6';
 
-  new Chart(document.getElementById('targetChart'), {{
-    type: 'bar',
-    data: {{
-      labels: CHART_DATA.targetVsAchieved.labels,
-      datasets: [{{ label: 'INR', data: CHART_DATA.targetVsAchieved.values, backgroundColor: [ICE, GOLD, '#8891A3', NAVY, PURPLE], borderRadius: 8 }}]
-    }},
-    options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
-  }});
-
-  new Chart(document.getElementById('ownerChart'), {{
-    type: 'bar',
-    data: {{
-      labels: CHART_DATA.byOwner.labels,
-      datasets: [
-        {{ label: 'Achieved', data: CHART_DATA.byOwner.values, backgroundColor: [GOLD, NAVY, PURPLE, '#5B6EAE'], borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
-        {{ label: 'Remaining to ₹1.8Cr', data: CHART_DATA.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
-      ]
-    }},
-    options: {{
-      indexAxis: 'y',
-      plugins: {{
-        legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
-        tooltip: {{
-          callbacks: {{
-            label: (ctx) => {{
-              if (ctx.dataset.label === 'Achieved') {{
-                const pct = CHART_DATA.byOwner.pcts[ctx.dataIndex];
-                return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ₹1.8Cr)`;
-              }}
-              return `Remaining: ₹${{(ctx.raw/100000).toFixed(1)}}L`;
-            }}
-          }}
-        }},
-        datalabels: {{ display: false }}
-      }},
-      scales: {{
-        x: {{ stacked: true, max: CHART_DATA.byOwner.target, ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }},
-        y: {{ stacked: true }}
-      }}
-    }},
-    plugins: [{{
-      id: 'pctLabel',
-      afterDatasetsDraw(chart) {{
-        const {{ ctx }} = chart;
-        chart.data.labels.forEach((label, i) => {{
-          const meta = chart.getDatasetMeta(0);
-          const bar = meta.data[i];
-          if (!bar) return;
-          const pct = CHART_DATA.byOwner.pcts[i];
-          ctx.save();
-          ctx.fillStyle = '#1E2761';
-          ctx.font = 'bold 11px -apple-system, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(pct + '%', bar.x + 8, bar.y);
-          ctx.restore();
-        }});
-      }}
-    }}]
-  }});
-
   const leadColors = [RED, '#AAB2C5', GOLD, '#8891A3', GREEN];
-  const leadTooltip = {{
-    callbacks: {{
-      label: (ctx) => {{
-        const pct = CHART_DATA.leadFunnel.pcts[ctx.dataIndex];
-        return `${{ctx.label}}: ${{ctx.raw}} (${{pct}}%)`;
-      }}
-    }}
-  }};
-  new Chart(document.getElementById('leadChart'), {{
-    type: 'doughnut',
-    data: {{ labels: CHART_DATA.leadFunnel.labels, datasets: [{{ data: CHART_DATA.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }}] }},
-    options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: leadTooltip }} }}
-  }});
+  const ownerColors = [GOLD, NAVY, PURPLE, '#5B6EAE', '#2E7D6B'];
 
-  ['QDR', 'July', 'August', 'September'].forEach(period => {{
+  function initFocusCharts(sfx, D) {{
+    const tgtLabel = '₹' + (D.byOwner.target / 10000000).toFixed(1) + 'Cr';
+
+    new Chart(document.getElementById('targetChart' + sfx), {{
+      type: 'bar',
+      data: {{
+        labels: D.targetVsAchieved.labels,
+        datasets: [{{ label: 'INR', data: D.targetVsAchieved.values, backgroundColor: [ICE, GOLD, '#8891A3', NAVY, PURPLE], borderRadius: 8 }}]
+      }},
+      options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
+    }});
+
+    new Chart(document.getElementById('ownerChart' + sfx), {{
+      type: 'bar',
+      data: {{
+        labels: D.byOwner.labels,
+        datasets: [
+          {{ label: 'Achieved', data: D.byOwner.values, backgroundColor: ownerColors, borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
+          {{ label: 'Remaining to ' + tgtLabel, data: D.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
+        ]
+      }},
+      options: {{
+        indexAxis: 'y',
+        plugins: {{
+          legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
+          tooltip: {{
+            callbacks: {{
+              label: (ctx) => {{
+                if (ctx.dataset.label === 'Achieved') {{
+                  const pct = D.byOwner.pcts[ctx.dataIndex];
+                  return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ${{tgtLabel}})`;
+                }}
+                return `Remaining: ₹${{(ctx.raw/100000).toFixed(1)}}L`;
+              }}
+            }}
+          }},
+          datalabels: {{ display: false }}
+        }},
+        scales: {{
+          x: {{ stacked: true, max: D.byOwner.target, ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }},
+          y: {{ stacked: true }}
+        }}
+      }},
+      plugins: [{{
+        id: 'pctLabel',
+        afterDatasetsDraw(chart) {{
+          const {{ ctx }} = chart;
+          chart.data.labels.forEach((label, i) => {{
+            const meta = chart.getDatasetMeta(0);
+            const bar = meta.data[i];
+            if (!bar) return;
+            const pct = D.byOwner.pcts[i];
+            ctx.save();
+            ctx.fillStyle = '#1E2761';
+            ctx.font = 'bold 11px -apple-system, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(pct + '%', bar.x + 8, bar.y);
+            ctx.restore();
+          }});
+        }}
+      }}]
+    }});
+
+    new Chart(document.getElementById('leadChart' + sfx), {{
+      type: 'doughnut',
+      data: {{ labels: D.leadFunnel.labels, datasets: [{{ data: D.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }}] }},
+      options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: (ctx) => {{
+        const pct = D.leadFunnel.pcts[ctx.dataIndex];
+        return `${{ctx.label}}: ${{ctx.raw}} (${{pct}}%)`;
+      }} }} }} }} }}
+    }});
+  }}
+  initFocusCharts('OND', CHART_DATA.focus.OND);
+  initFocusCharts('', CHART_DATA.focus.JAS);
+
+  CHART_DATA.leadPeriods.forEach(period => {{
     const canvasId = 'leadChart' + period;
     const el = document.getElementById(canvasId);
     if (!el) return;
@@ -1054,13 +1047,12 @@ def build_dashboard():
 
     print(f"Dashboard regenerated at {generated_at}")
     print(f"Till Date (team only): {len(till_date_rows)} brands, {fmt_currency(total_earr_alltime)}")
-    print(f"JAS {FOCUS_YEAR} focus: {len(focus_data['rows'])} brands, {fmt_currency(focus_data['total'])} ({target_progress_pct}% of {fmt_currency(JAS_TARGET)} target)")
+    for qk, cfg in QUARTER_CFG.items():
+        d = qdata[qk]
+        print(f"{qk} {FOCUS_YEAR}: {d['deal_count']} Go-Lives, {fmt_currency(d['total'])} ({d['progress_pct']}% of {fmt_currency(cfg['target'])}); pitches={d['pitches']}, audits={d['audits']}, conv={d['conv']:.1f}%, avg ticket={fmt_currency(d['avg_ticket'])}")
     print(f"Agreement Signed: {len(agreement_rows)} brands, {fmt_currency(agreement_total)}")
-    print(f"Pitches this month (stage-history): {pitches_this_month}, Audits Done this month (stage-history): {audits_this_month}, Conversion: {conversion_rate:.1f}%")
-    print(f"Avg ticket size (JAS): {fmt_currency(jas_avg_ticket_overall)}")
-    print(f"Weighted pipeline: raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}")
-    print(f"Lead buckets: {dict(lead_buckets)}")
-
+    print(f"Active pipeline (OND-created only): {pipeline_total_count} brands raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}; carry-forward excluded: {carry_count} brands {fmt_currency(carry_arr)}")
+    print(f"OND leads: {lead_agg['QDR']['total']} {dict(lead_agg['QDR']['buckets'])}")
 
 if __name__ == "__main__":
     build_dashboard()
