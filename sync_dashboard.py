@@ -16,7 +16,7 @@ import os
 import sys
 import json
 import math
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from collections import defaultdict
 from simple_salesforce import Salesforce
 
@@ -894,25 +894,42 @@ def build_dashboard():
 
     def focus_payload(qk):
         cfg, d = QUARTER_CFG[qk], qdata[qk]
-        ach_sorted = sorted(d["ach"].items(), key=lambda x: -x[1][1])
-        labels = [o for o, _ in ach_sorted]
-        values = [v[1] for _, v in ach_sorted]
         ind = cfg["individual_target"]
+        # Daily cumulative ARR over the quarter (line charts): team vs target pace, and per POC vs pace.
+        q_len = (cfg["end"] - cfg["start"]).days
+        today_i = min(max((today - cfg["start"]).days, 0), q_len - 1)
+        day_dates = [cfg["start"] + timedelta(days=i) for i in range(q_len)]
+        day_labels = [f"{dd.day} {dd.strftime('%b')}" for dd in day_dates]
+
+        def cum_series(owners=None):
+            per_day = [0] * q_len
+            for acct, owner, close_date, arr in d["rows"]:
+                if owners is not None and owner not in owners:
+                    continue
+                idx = (datetime.strptime(close_date, "%Y-%m-%d").date() - cfg["start"]).days
+                if 0 <= idx < q_len:
+                    per_day[idx] += arr
+            out, run = [], 0
+            for i in range(q_len):
+                run += per_day[i]
+                out.append(round(run) if i <= today_i else None)
+            return out
+
+        timeline = {
+            "labels": day_labels,
+            "todayIndex": today_i,
+            "target": [round(cfg["target"] * (i + 1) / q_len) for i in range(q_len)],
+            "achieved": cum_series(None),
+            "owners": [{"name": o, "data": cum_series({o})} for o in IC_NAMES],
+            "ownerPace": [round(ind * (i + 1) / q_len) for i in range(q_len)],
+            "individualTarget": ind,
+        }
         agg = lead_agg_by_q[qk]["QDR"]
         lv = [agg["buckets"].get(l, 0) for l in lead_labels]
         tot = agg["total"]
         return {
             "label": cfg["label"],
-            "targetVsAchieved": {
-                "labels": [f"{cfg['label']} Target", "Achieved So Far"] + cfg["months"],
-                "values": [cfg["target"], d["total"]] + [d["months"].get(m, {"total": 0})["total"] for m in cfg["months"]],
-            },
-            "byOwner": {
-                "labels": labels, "values": values,
-                "remaining": [max(ind - v, 0) for v in values],
-                "pcts": [round(v / ind * 100, 1) if ind else 0 for v in values],
-                "target": ind,
-            },
+            "timeline": timeline,
             "leadFunnel": {"labels": lead_labels, "values": lv, "pcts": [round(v / tot * 100, 1) if tot else 0 for v in lv]},
         }
 
@@ -1118,67 +1135,39 @@ def build_dashboard():
   const ownerColors = [GOLD, NAVY, PURPLE, '#5B6EAE', '#2E7D6B'];
 
   function initFocusCharts(sfx, D) {{
-    const tgtLabel = '₹' + (D.byOwner.target / 10000000).toFixed(1) + 'Cr';
+    const T = D.timeline;
+    const tgtLabel = '₹' + (T.individualTarget / 10000000).toFixed(1) + 'Cr';
+    const crTick = v => '₹' + (v/10000000).toFixed(1) + 'Cr';
+    const lakhTip = ctx => ctx.dataset.label + ': ₹' + (ctx.raw/100000).toFixed(1) + 'L';
+    const todayDot = ctx => ctx.dataIndex === T.todayIndex ? 4 : 0;
+    const lineOpts = {{
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: lakhTip }} }} }},
+      scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: crTick }} }}, x: {{ ticks: {{ autoSkip: true, maxTicksLimit: 12 }} }} }}
+    }};
 
     new Chart(document.getElementById('targetChart' + sfx), {{
-      type: 'bar',
+      type: 'line',
       data: {{
-        labels: D.targetVsAchieved.labels,
-        datasets: [{{ label: 'INR', data: D.targetVsAchieved.values, backgroundColor: [ICE, GOLD, '#8891A3', NAVY, PURPLE], borderRadius: 8 }}]
+        labels: T.labels,
+        datasets: [
+          {{ label: 'Target pace', data: T.target, borderColor: '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }},
+          {{ label: 'Achieved (cumulative)', data: T.achieved, borderColor: GOLD, backgroundColor: 'rgba(201,138,44,0.18)', borderWidth: 3, pointRadius: todayDot, pointBackgroundColor: GOLD, fill: true, tension: 0, spanGaps: false }}
+        ]
       }},
-      options: {{ indexAxis: 'y', plugins: {{ legend: {{ display: false }} }}, scales: {{ x: {{ ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }} }} }}
+      options: lineOpts
     }});
 
     new Chart(document.getElementById('ownerChart' + sfx), {{
-      type: 'bar',
+      type: 'line',
       data: {{
-        labels: D.byOwner.labels,
-        datasets: [
-          {{ label: 'Achieved', data: D.byOwner.values, backgroundColor: ownerColors, borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
-          {{ label: 'Remaining to ' + tgtLabel, data: D.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
-        ]
+        labels: T.labels,
+        datasets: T.owners.map((o, i) => ({{
+          label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: ownerColors[i % ownerColors.length],
+          borderWidth: 2.5, pointRadius: todayDot, fill: false, tension: 0, spanGaps: false
+        }})).concat([{{ label: 'Pace to ' + tgtLabel, data: T.ownerPace, borderColor: '#B8BFD4', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }}])
       }},
-      options: {{
-        indexAxis: 'y',
-        plugins: {{
-          legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
-          tooltip: {{
-            callbacks: {{
-              label: (ctx) => {{
-                if (ctx.dataset.label === 'Achieved') {{
-                  const pct = D.byOwner.pcts[ctx.dataIndex];
-                  return `Achieved: ₹${{(ctx.raw/100000).toFixed(1)}}L (${{pct}}% of ${{tgtLabel}})`;
-                }}
-                return `Remaining: ₹${{(ctx.raw/100000).toFixed(1)}}L`;
-              }}
-            }}
-          }},
-          datalabels: {{ display: false }}
-        }},
-        scales: {{
-          x: {{ stacked: true, max: D.byOwner.target, ticks: {{ callback: v => '₹' + (v/10000000).toFixed(1) + 'Cr' }} }},
-          y: {{ stacked: true }}
-        }}
-      }},
-      plugins: [{{
-        id: 'pctLabel',
-        afterDatasetsDraw(chart) {{
-          const {{ ctx }} = chart;
-          chart.data.labels.forEach((label, i) => {{
-            const meta = chart.getDatasetMeta(0);
-            const bar = meta.data[i];
-            if (!bar) return;
-            const pct = D.byOwner.pcts[i];
-            ctx.save();
-            ctx.fillStyle = '#1E2761';
-            ctx.font = 'bold 11px -apple-system, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(pct + '%', bar.x + 8, bar.y);
-            ctx.restore();
-          }});
-        }}
-      }}]
+      options: lineOpts
     }});
 
     new Chart(document.getElementById('leadChart' + sfx), {{
@@ -1214,15 +1203,19 @@ def build_dashboard():
   }});
 
   new Chart(document.getElementById('pipelineChart'), {{
-    type: 'bar',
+    type: 'line',
     data: {{
       labels: CHART_DATA.pipelineStages.labels,
       datasets: [
-        {{ label: 'Raw EARR', data: CHART_DATA.pipelineStages.values, backgroundColor: ICE, borderRadius: 8 }},
-        {{ label: 'Weighted Value', data: CHART_DATA.pipelineStages.weighted, backgroundColor: PURPLE, borderRadius: 8 }}
+        {{ label: 'Raw EARR', data: CHART_DATA.pipelineStages.values, borderColor: NAVY, backgroundColor: 'rgba(202,220,252,0.55)', borderWidth: 3, pointRadius: 5, fill: true, tension: 0.25 }},
+        {{ label: 'Weighted Value', data: CHART_DATA.pipelineStages.weighted, borderColor: PURPLE, backgroundColor: PURPLE, borderWidth: 3, pointRadius: 5, fill: false, tension: 0.25 }}
       ]
     }},
-    options: {{ plugins: {{ legend: {{ position: 'bottom' }} }}, scales: {{ y: {{ ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'Cr' }} }} }} }}
+    options: {{
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{ legend: {{ position: 'bottom' }}, tooltip: {{ callbacks: {{ label: ctx => ctx.dataset.label + ': ₹' + (ctx.raw/100000).toFixed(1) + 'L' }} }} }},
+      scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: v => '₹' + (v/100000).toFixed(0) + 'L' }} }} }}
+    }}
   }});
 </script>
 </body>
