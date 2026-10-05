@@ -53,6 +53,9 @@ MIN_AUDITS_FOR_RATIO = 5     # need at least this many audits before the live Au
 
 # POC Focus Areas tab is password protected. The password is NEVER stored in this (public) repo:
 # it is read from the FOCUS_TAB_PASSWORD GitHub secret. If the secret is missing the tab is left out.
+# Set PROTECT_FOCUS_TAB = True to password-lock the tab (needs the FOCUS_TAB_PASSWORD secret in GitHub).
+# False = the tab is visible to everyone who opens the dashboard.
+PROTECT_FOCUS_TAB = False
 FOCUS_TAB_PASSWORD = os.environ.get("FOCUS_TAB_PASSWORD", "")
 PBKDF2_ITERATIONS = 600_000
 
@@ -910,14 +913,27 @@ def build_dashboard():
     <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits come from Salesforce only: an opportunity counts when it actually moves into the Pitch or Audit Done stage on or after the period start (OND = 1 Oct). Amount or close-date edits and re-opens from Closed Lost are not counted. They can differ from the manual tracker.</p>
 """
 
-    poc_enabled = bool(FOCUS_TAB_PASSWORD)
-    if not poc_enabled:
-        print("POC Focus Areas tab skipped: FOCUS_TAB_PASSWORD is not set.")
-    poc_nav_button = '<button class="tab-btn" data-tab="pocfocus">🔒 POC Focus Areas</button>\n' if poc_enabled else ""
+    if not PROTECT_FOCUS_TAB:
+        poc_mode = "open"
+    elif FOCUS_TAB_PASSWORD:
+        poc_mode = "locked"
+    else:
+        poc_mode = "off"
+        print("POC Focus Areas tab skipped: protection is on but FOCUS_TAB_PASSWORD is not set.")
+    poc_nav_button = {
+        "open": '<button class="tab-btn" data-tab="pocfocus">🧭 POC Focus Areas</button>\n',
+        "locked": '<button class="tab-btn" data-tab="pocfocus">🔒 POC Focus Areas</button>\n',
+        "off": "",
+    }[poc_mode]
 
     def render_focus_areas_tab():
-        if not poc_enabled:
+        if poc_mode == "off":
             return ""
+        if poc_mode == "open":
+            return f"""
+  <div class="tab-content" id="pocfocus">{render_focus_inner()}
+  </div>
+"""
         blob = encrypt_for_page(render_focus_inner(), FOCUS_TAB_PASSWORD)
         return f"""
   <div class="tab-content" id="pocfocus" data-blob="{blob}">
@@ -1295,7 +1311,7 @@ def build_dashboard():
   // ---- Password gate for the POC Focus Areas tab (content is AES-GCM encrypted inside the page) ----
   (function () {{
     const tab = document.getElementById('pocfocus');
-    if (!tab) return;
+    if (!tab || !tab.dataset.blob) return;
     const blob = tab.dataset.blob;
     async function decryptBlob(pw) {{
       const raw = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
