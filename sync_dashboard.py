@@ -16,6 +16,7 @@ import os
 import sys
 import json
 import math
+import base64
 from datetime import datetime, date, timedelta
 from collections import defaultdict
 from simple_salesforce import Salesforce
@@ -49,6 +50,23 @@ PLAN_MIN_CONV = 0.32         # Audit -> Go-Live ratio: plan uses max(rep's last-
 BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
 EARLY_DAYS = 10              # before this many days into the quarter, focus uses the baseline, not live pace
 MIN_AUDITS_FOR_RATIO = 5     # need at least this many audits before the live Audit->Go-Live ratio is trusted
+
+# POC Focus Areas tab is password protected. The password is NEVER stored in this (public) repo:
+# it is read from the FOCUS_TAB_PASSWORD GitHub secret. If the secret is missing the tab is left out.
+FOCUS_TAB_PASSWORD = os.environ.get("FOCUS_TAB_PASSWORD", "")
+PBKDF2_ITERATIONS = 600_000
+
+
+def encrypt_for_page(plaintext, password):
+    """AES-256-GCM with a PBKDF2-SHA256 key. Returns base64(salt[16] + iv[12] + ciphertext+tag).
+    The page decrypts it in the browser with the Web Crypto API."""
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    salt, iv = os.urandom(16), os.urandom(12)
+    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=PBKDF2_ITERATIONS).derive(password.encode("utf-8"))
+    return base64.b64encode(salt + iv + AESGCM(key).encrypt(iv, plaintext.encode("utf-8"), None)).decode("ascii")
+
 
 # Individual contributors shown in "Achievement by Owner" (Rahul is excluded there on request).
 # Add Utkrist here (and to TEAM_OWNERS, with his exact Salesforce Owner.Name) once he starts.
@@ -792,13 +810,18 @@ def build_dashboard():
 
     <div class="chart-row">
       <div class="chart-card">
-        <h2 style="margin-top:0">Achievement by Owner</h2>
+        <h2 style="margin-top:0">Achievement by Owner — over time</h2>
         <canvas id="ownerChart{sfx}"></canvas>
       </div>
       <div class="chart-card">
         <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
         <canvas id="leadChart{sfx}"></canvas>
       </div>
+    </div>
+
+    <div class="chart-card">
+      <h2 style="margin-top:0">Achievement by Owner — progress to {fmt_currency(cfg['individual_target'])} target</h2>
+      <canvas id="ownerBarChart{sfx}" height="90"></canvas>
     </div>
 
     <div class="owner-row">
@@ -837,7 +860,7 @@ def build_dashboard():
 """
         return f'<div class="month-selector">{btns}</div>' + panels
 
-    def render_focus_areas_tab():
+    def render_focus_inner():
         chip_txt = {"ok": "On track", "warn": "Watch", "bad": "Behind", "na": "—"}
         banner = (f"Day {elapsed_days} of {q_days} ({frac*100:.0f}% of OND elapsed). " +
                   ("Focus areas use live pace against the plan." if use_live else
@@ -880,12 +903,34 @@ def build_dashboard():
       <div class="focus-callout {fr['sev']}">🔎 Focus: <b>{fr['focus_name']}</b> — {fr['focus_msg']}</div>
     </div>"""
         return f"""
-  <div class="tab-content" id="pocfocus">
     <h2>🧭 POC Focus Areas — OND {FOCUS_YEAR} · target {fmt_currency(target)} per POC</h2>
     <p class="section-note">{banner}</p>
     {summary}
     {cards}
     <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits come from Salesforce only: an opportunity counts when it actually moves into the Pitch or Audit Done stage on or after the period start (OND = 1 Oct). Amount or close-date edits and re-opens from Closed Lost are not counted. They can differ from the manual tracker.</p>
+"""
+
+    poc_enabled = bool(FOCUS_TAB_PASSWORD)
+    if not poc_enabled:
+        print("POC Focus Areas tab skipped: FOCUS_TAB_PASSWORD is not set.")
+    poc_nav_button = '<button class="tab-btn" data-tab="pocfocus">🔒 POC Focus Areas</button>\n' if poc_enabled else ""
+
+    def render_focus_areas_tab():
+        if not poc_enabled:
+            return ""
+        blob = encrypt_for_page(render_focus_inner(), FOCUS_TAB_PASSWORD)
+        return f"""
+  <div class="tab-content" id="pocfocus" data-blob="{blob}">
+    <div id="pocfocus-body">
+      <div class="chart-card" style="max-width:420px;margin:40px auto;text-align:center">
+        <div style="font-size:34px">🔒</div>
+        <h2 style="margin:6px 0 4px">POC Focus Areas</h2>
+        <p class="section-note">This tab is password protected.</p>
+        <input type="password" id="pocpw" placeholder="Password" autocomplete="off" style="padding:9px 12px;border:1px solid #D5DAE8;border-radius:8px;font-size:14px;width:62%">
+        <button id="pocunlock" class="unlock-btn active" style="margin-left:6px">Unlock</button>
+        <div id="pocmsg" style="margin-top:10px;font-size:12px;color:#B33A3A;min-height:16px"></div>
+      </div>
+    </div>
   </div>
 """
 
@@ -915,6 +960,8 @@ def build_dashboard():
                 out.append(round(run) if i <= today_i else None)
             return out
 
+        ach_sorted = sorted(d["ach"].items(), key=lambda x: -x[1][1])
+        bar_vals = [v[1] for _, v in ach_sorted]
         timeline = {
             "labels": day_labels,
             "todayIndex": today_i,
@@ -930,6 +977,11 @@ def build_dashboard():
         return {
             "label": cfg["label"],
             "timeline": timeline,
+            "byOwner": {
+                "labels": [o for o, _ in ach_sorted], "values": bar_vals,
+                "remaining": [max(ind - v, 0) for v in bar_vals],
+                "pcts": [round(v / ind * 100, 1) if ind else 0 for v in bar_vals], "target": ind,
+            },
             "leadFunnel": {"labels": lead_labels, "values": lv, "pcts": [round(v / tot * 100, 1) if tot else 0 for v in lv]},
         }
 
@@ -974,8 +1026,8 @@ def build_dashboard():
   .leadtab-panel {{ display:none; }}
   .leadtab-panel.active {{ display:block; animation:fadeIn 0.3s ease; }}
   .month-selector {{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }}
-  .month-selector button, .leadtab-btn {{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 16px; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer; transition:all 0.2s; }}
-  .month-selector button.active, .leadtab-btn.active {{ background:var(--navy); color:white; border-color:var(--navy); }}
+  .month-selector button, .leadtab-btn, .unlock-btn {{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 16px; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer; transition:all 0.2s; }}
+  .month-selector button.active, .leadtab-btn.active, .unlock-btn.active {{ background:var(--navy); color:white; border-color:var(--navy); }}
   .month-selector button:hover, .leadtab-btn:hover {{ box-shadow:0 2px 8px rgba(30,39,97,0.12); }}
   .tab-content.active {{ display:block; animation:fadeIn 0.35s ease; }}
   @keyframes fadeIn {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:translateY(0); }} }}
@@ -1041,8 +1093,7 @@ def build_dashboard():
 </header>
 <nav>
   <button class="tab-btn active" data-tab="ond">🎯 OND {FOCUS_YEAR} (Focus)</button>
-  <button class="tab-btn" data-tab="pocfocus">🧭 POC Focus Areas</button>
-  <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
+  {poc_nav_button}  <button class="tab-btn" data-tab="tilldate">⭐ Till Date</button>
   <button class="tab-btn" data-tab="pipeline">🚦 Active Pipeline</button>
   <button class="tab-btn" data-tab="leadfunnel">📊 Lead Funnel</button>
   <button class="tab-btn" data-tab="sfreports">📁 SF Reports</button>
@@ -1170,6 +1221,45 @@ def build_dashboard():
       options: lineOpts
     }});
 
+    new Chart(document.getElementById('ownerBarChart' + sfx), {{
+      type: 'bar',
+      data: {{
+        labels: D.byOwner.labels,
+        datasets: [
+          {{ label: 'Achieved', data: D.byOwner.values, backgroundColor: ownerColors, borderRadius: {{topLeft:8,bottomLeft:8,topRight:0,bottomRight:0}}, stack: 's' }},
+          {{ label: 'Remaining to ' + tgtLabel, data: D.byOwner.remaining, backgroundColor: '#E8EAF2', borderRadius: {{topLeft:0,bottomLeft:0,topRight:8,bottomRight:8}}, stack: 's' }}
+        ]
+      }},
+      options: {{
+        indexAxis: 'y',
+        plugins: {{
+          legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
+          tooltip: {{ callbacks: {{ label: (ctx) => {{
+            if (ctx.dataset.label === 'Achieved') return 'Achieved: ₹' + (ctx.raw/100000).toFixed(1) + 'L (' + D.byOwner.pcts[ctx.dataIndex] + '% of ' + tgtLabel + ')';
+            return 'Remaining: ₹' + (ctx.raw/100000).toFixed(1) + 'L';
+          }} }} }}
+        }},
+        scales: {{ x: {{ stacked: true, max: D.byOwner.target, ticks: {{ callback: crTick }} }}, y: {{ stacked: true }} }}
+      }},
+      plugins: [{{
+        id: 'pctLabel',
+        afterDatasetsDraw(chart) {{
+          const {{ ctx }} = chart;
+          chart.data.labels.forEach((label, i) => {{
+            const bar = chart.getDatasetMeta(0).data[i];
+            if (!bar) return;
+            ctx.save();
+            ctx.fillStyle = '#1E2761';
+            ctx.font = 'bold 11px -apple-system, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(D.byOwner.pcts[i] + '%', bar.x + 8, bar.y);
+            ctx.restore();
+          }});
+        }}
+      }}]
+    }});
+
     new Chart(document.getElementById('leadChart' + sfx), {{
       type: 'doughnut',
       data: {{ labels: D.leadFunnel.labels, datasets: [{{ data: D.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }}] }},
@@ -1202,6 +1292,37 @@ def build_dashboard():
     }});
   }});
 
+  // ---- Password gate for the POC Focus Areas tab (content is AES-GCM encrypted inside the page) ----
+  (function () {{
+    const tab = document.getElementById('pocfocus');
+    if (!tab) return;
+    const blob = tab.dataset.blob;
+    async function decryptBlob(pw) {{
+      const raw = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
+      const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+      const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey({{ name: 'PBKDF2', salt: salt, iterations: {PBKDF2_ITERATIONS}, hash: 'SHA-256' }}, km, {{ name: 'AES-GCM', length: 256 }}, false, ['decrypt']);
+      const buf = await crypto.subtle.decrypt({{ name: 'AES-GCM', iv: iv }}, key, ct);
+      return new TextDecoder().decode(buf);
+    }}
+    async function tryUnlock(pw, silent) {{
+      const msg = document.getElementById('pocmsg');
+      if (!window.crypto || !crypto.subtle) {{ if (msg) msg.textContent = 'Open the dashboard over https to unlock.'; return; }}
+      try {{
+        const html = await decryptBlob(pw);
+        document.getElementById('pocfocus-body').innerHTML = html;
+        try {{ sessionStorage.setItem('pocpw', pw); }} catch (e) {{}}
+        const btn = document.querySelector('[data-tab="pocfocus"]');
+        if (btn) btn.textContent = '🔓 POC Focus Areas';
+      }} catch (e) {{
+        if (!silent && msg) msg.textContent = 'Incorrect password.';
+      }}
+    }}
+    document.getElementById('pocunlock').addEventListener('click', () => tryUnlock(document.getElementById('pocpw').value, false));
+    document.getElementById('pocpw').addEventListener('keydown', e => {{ if (e.key === 'Enter') tryUnlock(e.target.value, false); }});
+    try {{ const saved = sessionStorage.getItem('pocpw'); if (saved) tryUnlock(saved, true); }} catch (e) {{}}
+  }})();
+
   new Chart(document.getElementById('pipelineChart'), {{
     type: 'line',
     data: {{
@@ -1230,8 +1351,6 @@ def build_dashboard():
     for qk, cfg in QUARTER_CFG.items():
         d = qdata[qk]
         print(f"{qk} {FOCUS_YEAR}: {d['deal_count']} Go-Lives, {fmt_currency(d['total'])} ({d['progress_pct']}% of {fmt_currency(cfg['target'])}); pitches={d['pitches']}, audits={d['audits']}, conv={d['conv']:.1f}%, avg ticket={fmt_currency(d['avg_ticket'])}")
-    for fr in focus_reps:
-        print(f"Focus {fr['rep']}: {fr['focus_name']} — {fr['focus_msg']}")
     print(f"Agreement Signed: {len(agreement_rows)} brands, {fmt_currency(agreement_total)}")
     print(f"Active pipeline (OND-created only): {pipeline_total_count} brands raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}; carry-forward excluded: {carry_count} brands {fmt_currency(carry_arr)}")
     print(f"OND leads: {lead_agg['QDR']['total']} {dict(lead_agg['QDR']['buckets'])}")
