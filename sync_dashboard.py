@@ -54,6 +54,32 @@ OND_INDIVIDUAL_TARGET = 1_80_00_000
 PLAN_AOV = 7_00_000          # target average order value (Rs 7L)
 PLAN_MIN_CONV = 0.32         # Audit -> Go-Live ratio: plan uses max(rep's last-quarter ratio, this)
 BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
+
+# --- POC Focus Areas: numbers from the manual tracker -------------------------------------------
+# When USE_TRACKER_NUMBERS is True, the Focus tab uses these pitch/audit counts instead of the
+# Salesforce-derived ones (Go-Lives and ARR still come from Salesforce). Set it to False to go
+# back to fully live Salesforce numbers. Update TRACKER_LIVE from the tracker whenever it changes.
+USE_TRACKER_NUMBERS = True
+TRACKER_ASOF = "11 Oct"
+TRACKER_BASELINE = {   # JAS 2026 baseline (team: 524 pitches, 235 audits, 64 Go-Lives)
+    "Gaurav":  {"pitches": 169, "audits": 73},
+    "Trishun": {"pitches": 127, "audits": 61},
+    "Tushar":  {"pitches": 124, "audits": 46},
+    "Vaishak": {"pitches": 69,  "audits": 27},
+}
+TRACKER_LIVE = {       # OND 2026 so far (as of TRACKER_ASOF)
+    "Gaurav":  {"pitches": 7,  "audits": 4},
+    "Trishun": {"pitches": 9,  "audits": 3},
+    "Tushar":  {"pitches": 14, "audits": 6},
+    "Vaishak": {"pitches": 1,  "audits": 1},
+}
+
+
+def tracker_val(table, rep, key, fallback):
+    if USE_TRACKER_NUMBERS and rep in table:
+        return table[rep][key]
+    return fallback
+
 EARLY_DAYS = 10              # before this many days into the quarter, focus uses the baseline, not live pace
 MIN_AUDITS_FOR_RATIO = 5     # need at least this many audits before the live Audit->Go-Live ratio is trusted
 
@@ -549,9 +575,11 @@ def build_dashboard():
     base_q, live_q = qdata[BASELINE_QUARTER], qdata[LEAD_FUNNEL_QUARTER]
     for rep in IC_NAMES:
         target = tgt_for(live_cfg, rep)
-        b_pit, b_aud = base_q["pitches_by"].get(rep, 0), base_q["audits_by"].get(rep, 0)
+        b_pit = tracker_val(TRACKER_BASELINE, rep, "pitches", base_q["pitches_by"].get(rep, 0))
+        b_aud = tracker_val(TRACKER_BASELINE, rep, "audits", base_q["audits_by"].get(rep, 0))
         b_gl, b_arr = base_q["ach"][rep]
-        c_pit, c_aud = live_q["pitches_by"].get(rep, 0), live_q["audits_by"].get(rep, 0)
+        c_pit = tracker_val(TRACKER_LIVE, rep, "pitches", live_q["pitches_by"].get(rep, 0))
+        c_aud = tracker_val(TRACKER_LIVE, rep, "audits", live_q["audits_by"].get(rep, 0))
         c_gl, c_arr = live_q["ach"][rep]
 
         b_conv = (b_gl / b_aud) if b_aud else None
@@ -880,6 +908,10 @@ def build_dashboard():
 """
         return f'<div class="month-selector">{btns}</div>' + panels
 
+    if USE_TRACKER_NUMBERS:
+        source_note = f"Pitches and audits come from the manual tracker (JAS baseline; OND as of {TRACKER_ASOF}). Go-Lives and booked ARR come from Salesforce."
+    else:
+        source_note = "Pitches and audits come from Salesforce only: an opportunity counts when it actually moves into the Pitch or Audit Done stage on or after the period start (OND = 1 Oct). Amount or close-date edits and re-opens from Closed Lost are not counted. They can differ from the manual tracker."
     focus_targets_txt = " · ".join(f"{fr['rep']} {fmt_currency(fr['target'])}" for fr in focus_reps)
 
     def render_focus_inner():
@@ -929,7 +961,7 @@ def build_dashboard():
     <p class="section-note">{banner}</p>
     {summary}
     {cards}
-    <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. Pitches and audits come from Salesforce only: an opportunity counts when it actually moves into the Pitch or Audit Done stage on or after the period start (OND = 1 Oct). Amount or close-date edits and re-opens from Closed Lost are not counted. They can differ from the manual tracker.</p>
+    <p class="section-note">How the plan is set: AOV {_lakh(PLAN_AOV)}; Audit → Go-Live at least the higher of the POC's {BASELINE_QUARTER} ratio and {int(PLAN_MIN_CONV*100)}%; audits needed = target ÷ (AOV × ratio); pitches needed = audits ÷ the POC's {BASELINE_QUARTER} Pitch → Audit rate. Status: On track is 100% or more of what is needed, Watch is 85–100%, Behind is below 85%. {source_note}</p>
 """
 
     if not PROTECT_FOCUS_TAB:
