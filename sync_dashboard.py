@@ -39,9 +39,15 @@ QUARTER_MONTHS = {
 FOCUS_YEAR = 2026
 JAS_TARGET = 7_20_00_000  # Rs 7.2 Cr
 INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
-# OND 2026 targets: Rs 9 Cr team target; the
-# individual target per POC is Rs 1.8 Cr. Edit these two lines to change.
-OND_TARGET = 9_00_00_000
+# OND 2026 targets: one target per POC (edit this dict to change). The team target is the
+# sum of the individual targets. OND_INDIVIDUAL_TARGET is only the fallback for anyone not listed.
+OND_INDIVIDUAL_TARGETS = {
+    "Trishun": 1_80_00_000,   # Rs 1.8 Cr
+    "Gaurav":  1_80_00_000,   # Rs 1.8 Cr
+    "Tushar":  1_80_00_000,   # Rs 1.8 Cr
+    "Vaishak": 1_50_00_000,   # Rs 1.5 Cr
+}
+OND_TARGET = sum(OND_INDIVIDUAL_TARGETS.values())   # Rs 6.9 Cr
 OND_INDIVIDUAL_TARGET = 1_80_00_000
 
 # --- POC Focus Areas tab: plan assumptions to reach the individual target ---
@@ -81,17 +87,28 @@ QUARTER_CFG = {
         "label": "OND", "tab_id": "ond", "suffix": "OND",
         "start": date(2026, 10, 1), "end": date(2027, 1, 1),
         "months": ["October", "November", "December"],
-        "target": OND_TARGET, "individual_target": OND_INDIVIDUAL_TARGET,
+        "target": OND_TARGET, "individual_target": OND_INDIVIDUAL_TARGET, "individual_targets": OND_INDIVIDUAL_TARGETS,
     },
     "JAS": {
         "label": "JAS", "tab_id": "jas", "suffix": "",
         "start": date(2026, 7, 1), "end": date(2026, 10, 1),
         "months": ["July", "August", "September"],
-        "target": JAS_TARGET, "individual_target": INDIVIDUAL_TARGET,
+        "target": JAS_TARGET, "individual_target": INDIVIDUAL_TARGET, "individual_targets": {},
     },
 }
+def tgt_for(cfg, name):
+    """Individual target for a POC (matched on first name); falls back to the quarter's default."""
+    first = name.split()[0] if name else ""
+    return cfg.get("individual_targets", {}).get(first, cfg["individual_target"])
+
+
+def targets_label(cfg):
+    vals = {tgt_for(cfg, n) for n in IC_NAMES}
+    return fmt_currency(vals.pop()) if len(vals) == 1 else "individual targets"
+
+
 LEAD_FUNNEL_QUARTER = "OND"   # Lead Funnel tab talks about OND leads only
-PIPELINE_FROM = date(2026, 10, 1)  # Active Pipeline tab shows opportunities created from this date (OND)
+PIPELINE_FROM = date(2026, 10, 1)  # only used to split the pipeline note into 'created in OND' vs 'carried over'
 
 # Salesforce Reports to surface on the "SF Reports" tab.
 # id = the 18-char Report Id from the Lightning URL; url = the full link to open it in SF.
@@ -395,7 +412,7 @@ def build_dashboard():
     owner_stage_matrix = defaultdict(lambda: {s: {"count": 0, "earr": 0} for s in STAGE_WEIGHTS})
     pipeline_total_count = 0
     pipeline_total_arr = 0
-    carry_count = 0   # active opportunities created before OND (excluded from this tab)
+    carry_count = 0   # active opportunities created before OND (still INCLUDED; only used for the note)
     carry_arr = 0
     pipeline_from_str = PIPELINE_FROM.isoformat()
     for r in pipeline_records:
@@ -407,7 +424,6 @@ def build_dashboard():
         if (r.get("CreatedDate") or "")[:10] < pipeline_from_str:
             carry_count += 1
             carry_arr += arr
-            continue
         stage_summary[stage]["count"] += 1
         stage_summary[stage]["earr"] += arr
         owner_stage_matrix[owner][stage]["count"] += 1
@@ -531,8 +547,8 @@ def build_dashboard():
 
     focus_reps = []
     base_q, live_q = qdata[BASELINE_QUARTER], qdata[LEAD_FUNNEL_QUARTER]
-    target = live_cfg["individual_target"]
     for rep in IC_NAMES:
+        target = tgt_for(live_cfg, rep)
         b_pit, b_aud = base_q["pitches_by"].get(rep, 0), base_q["audits_by"].get(rep, 0)
         b_gl, b_arr = base_q["ach"][rep]
         c_pit, c_aud = live_q["pitches_by"].get(rep, 0), live_q["audits_by"].get(rep, 0)
@@ -595,7 +611,7 @@ def build_dashboard():
         base_aov_ratio = (b_aov / PLAN_AOV) if b_aov else None
         focus_reps.append({
             "rep": rep, "drivers": drivers, "focus_name": focus_name, "focus_msg": focus_msg, "sev": sev,
-            "arr": c_arr, "arr_pct": (c_arr / target * 100) if target else 0, "exp_arr": exp_arr,
+            "arr": c_arr, "target": target, "arr_pct": (c_arr / target * 100) if target else 0, "exp_arr": exp_arr,
             "proj_arr": (c_arr / frac) if frac else 0,
             "rows": [
                 ("Pitches", str(b_pit), str(c_pit), f"{exp_pit:.0f}" if exp_pit is not None else "–", f"~{pit_t}" if pit_t else "–",
@@ -650,9 +666,10 @@ def build_dashboard():
             </div>"""
         return html
 
-    def render_achievement_target_cards(owner_totals, target):
+    def render_achievement_target_cards(owner_totals, cfg):
         html = ""
         for owner, (count, arr) in sorted(owner_totals.items(), key=lambda x: -x[1][1]):
+            target = tgt_for(cfg, owner)
             initials = "".join(w[0] for w in owner.split()[:2]).upper()
             pct_of_target = min(arr / target * 100, 100) if target else 0
             gap = max(target - arr, 0)
@@ -823,12 +840,12 @@ def build_dashboard():
     </div>
 
     <div class="chart-card">
-      <h2 style="margin-top:0">Achievement by Owner — progress to {fmt_currency(cfg['individual_target'])} target</h2>
+      <h2 style="margin-top:0">Achievement by Owner — progress to {targets_label(cfg)}</h2>
       <canvas id="ownerBarChart{sfx}" height="90"></canvas>
     </div>
 
     <div class="owner-row">
-      {render_achievement_target_cards(d['ach'], cfg['individual_target'])}
+      {render_achievement_target_cards(d['ach'], cfg)}
     </div>
 
     <h2>📋 Agreement Signed — Ready to Go Live Soon</h2>
@@ -863,6 +880,8 @@ def build_dashboard():
 """
         return f'<div class="month-selector">{btns}</div>' + panels
 
+    focus_targets_txt = " · ".join(f"{fr['rep']} {fmt_currency(fr['target'])}" for fr in focus_reps)
+
     def render_focus_inner():
         chip_txt = {"ok": "On track", "warn": "Watch", "bad": "Behind", "na": "—"}
         banner = (f"Day {elapsed_days} of {q_days} ({frac*100:.0f}% of OND elapsed). " +
@@ -874,7 +893,7 @@ def build_dashboard():
             for d in fr["drivers"]:
                 cc = _chip_class(d["ratio"])
                 cells += f"<td><span class='chip {cc}'>{chip_txt[cc]}</span><div class='cell-sub'>{d['cell']}</div></td>"
-            summary += (f"<tr><td><b>{fr['rep']}</b></td><td class='center-cell'>{fmt_currency(fr['arr'])}<div class='cell-sub'>{fr['arr_pct']:.0f}% of {fmt_currency(target)}</div></td>"
+            summary += (f"<tr><td><b>{fr['rep']}</b></td><td class='center-cell'>{fmt_currency(fr['arr'])}<div class='cell-sub'>{fr['arr_pct']:.0f}% of {fmt_currency(fr['target'])}</div></td>"
                         f"{cells}<td><span class='chip {fr['sev']}'>{fr['focus_name']}</span></td></tr>")
         summary += "</table>"
 
@@ -882,7 +901,7 @@ def build_dashboard():
         for fr in focus_reps:
             initials = fr["rep"][:2].upper()
             bar = min(fr["arr_pct"], 100)
-            exp_pos = min(fr["exp_arr"] / target * 100, 100) if target else 0
+            exp_pos = min(fr["exp_arr"] / fr["target"] * 100, 100) if fr["target"] else 0
             rows_html = ""
             for name, base, cur, exp, need, chip in fr["rows"]:
                 rows_html += (f"<tr><td>{name}</td><td class='center-cell'>{base}</td><td class='center-cell'><b>{cur}</b></td>"
@@ -893,7 +912,7 @@ def build_dashboard():
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <div class="owner-card" style="padding:0;box-shadow:none;flex:none;min-width:0"><div class="initials" style="margin:0">{initials}</div></div>
         <div><b style="font-size:15px;color:var(--heading)">{fr['rep']}</b>
-        <div class="cell-sub">{fmt_currency(fr['arr'])} of {fmt_currency(target)} · expected by today {fmt_currency(fr['exp_arr'])} · projected at current pace: {proj}</div></div>
+        <div class="cell-sub">{fmt_currency(fr['arr'])} of {fmt_currency(fr['target'])} · expected by today {fmt_currency(fr['exp_arr'])} · projected at current pace: {proj}</div></div>
       </div>
       <div class="progress-wrap" style="height:14px;margin:4px 0 12px;position:relative">
         <div class="progress-fill" style="width:{bar:.1f}%"></div>
@@ -906,7 +925,7 @@ def build_dashboard():
       <div class="focus-callout {fr['sev']}">🔎 Focus: <b>{fr['focus_name']}</b> — {fr['focus_msg']}</div>
     </div>"""
         return f"""
-    <h2>🧭 POC Focus Areas — OND {FOCUS_YEAR} · target {fmt_currency(target)} per POC</h2>
+    <h2>🧭 POC Focus Areas — OND {FOCUS_YEAR} · targets: {focus_targets_txt}</h2>
     <p class="section-note">{banner}</p>
     {summary}
     {cards}
@@ -978,14 +997,20 @@ def build_dashboard():
 
         ach_sorted = sorted(d["ach"].items(), key=lambda x: -x[1][1])
         bar_vals = [v[1] for _, v in ach_sorted]
+        tg = [tgt_for(cfg, o) for o, _ in ach_sorted]
+        groups = {}
+        for o in IC_NAMES:
+            groups.setdefault(tgt_for(cfg, o), []).append(o)
+        pace_lines = [{"label": "Pace to ₹" + format(t / 10000000, ".1f") + "Cr" + (" (" + ", ".join(n) + ")" if len(groups) > 1 else ""),
+                       "data": [round(t * (i + 1) / q_len) for i in range(q_len)]}
+                      for t, n in sorted(groups.items(), reverse=True)]
         timeline = {
             "labels": day_labels,
             "todayIndex": today_i,
             "target": [round(cfg["target"] * (i + 1) / q_len) for i in range(q_len)],
             "achieved": cum_series(None),
             "owners": [{"name": o, "data": cum_series({o})} for o in IC_NAMES],
-            "ownerPace": [round(ind * (i + 1) / q_len) for i in range(q_len)],
-            "individualTarget": ind,
+            "paceLines": pace_lines,
         }
         agg = lead_agg_by_q[qk]["QDR"]
         lv = [agg["buckets"].get(l, 0) for l in lead_labels]
@@ -995,8 +1020,8 @@ def build_dashboard():
             "timeline": timeline,
             "byOwner": {
                 "labels": [o for o, _ in ach_sorted], "values": bar_vals,
-                "remaining": [max(ind - v, 0) for v in bar_vals],
-                "pcts": [round(v / ind * 100, 1) if ind else 0 for v in bar_vals], "target": ind,
+                "remaining": [max(t - v, 0) for t, v in zip(tg, bar_vals)],
+                "pcts": [round(v / t * 100, 1) if t else 0 for v, t in zip(bar_vals, tg)], "target": max(tg) if tg else ind, "targets": tg,
             },
             "leadFunnel": {"labels": lead_labels, "values": lv, "pcts": [round(v / tot * 100, 1) if tot else 0 for v in lv]},
         }
@@ -1144,7 +1169,7 @@ def build_dashboard():
   <div class="tab-content" id="pipeline">
     <h2>🚦 Weighted Active Pipeline — OND {FOCUS_YEAR} (Team Only)</h2>
     <p class="section-note">Weighted using stage-conversion assumptions: Pitch 5%, Pre Audit 15%, Audit Done 30%, Agreement Signed 70% (this last figure wasn't specified — adjust in the script if a different rate applies).</p>
-    <p class="section-note">Showing only opportunities created in OND {FOCUS_YEAR} (from {PIPELINE_FROM.strftime('%d %b %Y')}). {carry_count} active opportunities worth {fmt_currency(carry_arr)} created before OND are not included here.</p>
+    <p class="section-note">Covers the full active pipeline: {pipeline_total_count} brands, {fmt_currency(pipeline_total_arr)} raw EARR. Of these, {pipeline_total_count - carry_count} brands ({fmt_currency(pipeline_total_arr - carry_arr)}) were created in OND {FOCUS_YEAR} (from {PIPELINE_FROM.strftime('%d %b %Y')}) and {carry_count} brands ({fmt_currency(carry_arr)}) are carried over from earlier quarters.</p>
     <div class="stat-row">
       <div class="stat-card"><div class="num">{pipeline_total_count}</div><div class="label">Active Brands</div></div>
       <div class="stat-card money"><div class="num">{fmt_currency(pipeline_total_arr)}</div><div class="label">Raw Pipeline EARR</div></div>
@@ -1203,7 +1228,7 @@ def build_dashboard():
 
   function initFocusCharts(sfx, D) {{
     const T = D.timeline;
-    const tgtLabel = '₹' + (T.individualTarget / 10000000).toFixed(1) + 'Cr';
+    const tgtLabel = 'target';
     const crTick = v => '₹' + (v/10000000).toFixed(1) + 'Cr';
     const lakhTip = ctx => ctx.dataset.label + ': ₹' + (ctx.raw/100000).toFixed(1) + 'L';
     const todayDot = ctx => ctx.dataIndex === T.todayIndex ? 4 : 0;
@@ -1232,7 +1257,7 @@ def build_dashboard():
         datasets: T.owners.map((o, i) => ({{
           label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: ownerColors[i % ownerColors.length],
           borderWidth: 2.5, pointRadius: todayDot, fill: false, tension: 0, spanGaps: false
-        }})).concat([{{ label: 'Pace to ' + tgtLabel, data: T.ownerPace, borderColor: '#B8BFD4', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }}])
+        }})).concat(T.paceLines.map((p, i) => ({{ label: p.label, data: p.data, borderColor: i === 0 ? '#B8BFD4' : '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }})))
       }},
       options: lineOpts
     }});
@@ -1251,7 +1276,7 @@ def build_dashboard():
         plugins: {{
           legend: {{ display: true, position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }},
           tooltip: {{ callbacks: {{ label: (ctx) => {{
-            if (ctx.dataset.label === 'Achieved') return 'Achieved: ₹' + (ctx.raw/100000).toFixed(1) + 'L (' + D.byOwner.pcts[ctx.dataIndex] + '% of ' + tgtLabel + ')';
+            if (ctx.dataset.label === 'Achieved') return 'Achieved: ₹' + (ctx.raw/100000).toFixed(1) + 'L (' + D.byOwner.pcts[ctx.dataIndex] + '% of ₹' + (D.byOwner.targets[ctx.dataIndex] / 10000000).toFixed(2) + 'Cr)';
             return 'Remaining: ₹' + (ctx.raw/100000).toFixed(1) + 'L';
           }} }} }}
         }},
@@ -1368,7 +1393,7 @@ def build_dashboard():
         d = qdata[qk]
         print(f"{qk} {FOCUS_YEAR}: {d['deal_count']} Go-Lives, {fmt_currency(d['total'])} ({d['progress_pct']}% of {fmt_currency(cfg['target'])}); pitches={d['pitches']}, audits={d['audits']}, conv={d['conv']:.1f}%, avg ticket={fmt_currency(d['avg_ticket'])}")
     print(f"Agreement Signed: {len(agreement_rows)} brands, {fmt_currency(agreement_total)}")
-    print(f"Active pipeline (OND-created only): {pipeline_total_count} brands raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}; carry-forward excluded: {carry_count} brands {fmt_currency(carry_arr)}")
+    print(f"Active pipeline (all): {pipeline_total_count} brands raw={fmt_currency(pipeline_total_arr)} weighted={fmt_currency(weighted_total)}; of which carried over from before OND: {carry_count} brands {fmt_currency(carry_arr)}")
     print(f"OND leads: {lead_agg['QDR']['total']} {dict(lead_agg['QDR']['buckets'])}")
 
 if __name__ == "__main__":
