@@ -60,7 +60,7 @@ BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
 # Salesforce-derived ones (Go-Lives and ARR still come from Salesforce). Set it to False to go
 # back to fully live Salesforce numbers. Update TRACKER_LIVE from the tracker whenever it changes.
 USE_TRACKER_NUMBERS = True
-TRACKER_ASOF = "11 Oct"
+TRACKER_ASOF = "13 Oct"
 TRACKER_BASELINE = {   # JAS 2026 baseline (team: 524 pitches, 235 audits, 64 Go-Lives)
     "Gaurav":  {"pitches": 169, "audits": 73},
     "Trishun": {"pitches": 127, "audits": 61},
@@ -68,10 +68,10 @@ TRACKER_BASELINE = {   # JAS 2026 baseline (team: 524 pitches, 235 audits, 64 Go
     "Vaishak": {"pitches": 69,  "audits": 27},
 }
 TRACKER_LIVE = {       # OND 2026 so far (as of TRACKER_ASOF)
-    "Gaurav":  {"pitches": 7,  "audits": 4},
-    "Trishun": {"pitches": 9,  "audits": 3},
-    "Tushar":  {"pitches": 14, "audits": 6},
-    "Vaishak": {"pitches": 1,  "audits": 1},
+    "Gaurav":  {"pitches": 11, "audits": 6},
+    "Trishun": {"pitches": 14, "audits": 4},
+    "Tushar":  {"pitches": 19, "audits": 9},
+    "Vaishak": {"pitches": 3,  "audits": 1},
 }
 
 
