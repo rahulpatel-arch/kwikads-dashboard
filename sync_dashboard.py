@@ -27,7 +27,8 @@ TEAM_OWNERS = {
     "Gaurav Panchal": "Gaurav",
     "Trishun Tripathi": "Trishun",
     "Tushar Joshi": "Tushar",
-    "Vaishak Mohan": "Vaishak",
+    "Vaishak Mohan": "Vaishak",  # kept so his historical (pre-departure) deals still count in Till Date / Quarterly Segregation
+    "Utkrist Gurung": "Utkrist",
 }
 
 QUARTER_MONTHS = {
@@ -45,7 +46,7 @@ OND_INDIVIDUAL_TARGETS = {
     "Trishun": 1_80_00_000,   # Rs 1.8 Cr
     "Gaurav":  1_80_00_000,   # Rs 1.8 Cr
     "Tushar":  1_80_00_000,   # Rs 1.8 Cr
-    "Vaishak": 1_50_00_000,   # Rs 1.5 Cr
+    "Utkrist": 1_50_00_000,   # Rs 1.5 Cr (inherited from Vaishak's slot; adjust if Utkrist should have a different target)
 }
 OND_TARGET = sum(OND_INDIVIDUAL_TARGETS.values())   # Rs 6.9 Cr
 OND_INDIVIDUAL_TARGET = 1_80_00_000
@@ -65,13 +66,11 @@ TRACKER_BASELINE = {   # JAS 2026 baseline (team: 524 pitches, 235 audits, 64 Go
     "Gaurav":  {"pitches": 169, "audits": 73},
     "Trishun": {"pitches": 127, "audits": 61},
     "Tushar":  {"pitches": 124, "audits": 46},
-    "Vaishak": {"pitches": 69,  "audits": 27},
 }
 TRACKER_LIVE = {       # OND 2026 so far (as of TRACKER_ASOF)
     "Gaurav":  {"pitches": 11, "audits": 6},
     "Trishun": {"pitches": 14, "audits": 4},
     "Tushar":  {"pitches": 19, "audits": 9},
-    "Vaishak": {"pitches": 3,  "audits": 1},
 }
 
 
@@ -104,8 +103,7 @@ def encrypt_for_page(plaintext, password):
 
 
 # Individual contributors shown in "Achievement by Owner" (Rahul is excluded there on request).
-# Add Utkrist here (and to TEAM_OWNERS, with his exact Salesforce Owner.Name) once he starts.
-IC_NAMES = ["Gaurav", "Trishun", "Tushar", "Vaishak"]
+IC_NAMES = ["Gaurav", "Trishun", "Tushar", "Utkrist"]
 
 # Focus tabs. JAS stays as a frozen quarter; OND is the live "Focus" tab.
 QUARTER_CFG = {
