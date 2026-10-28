@@ -856,7 +856,7 @@ def build_dashboard():
 
     <div class="chart-row">
       <div class="chart-card">
-        <h2 style="margin-top:0">Achievement by Owner — over time</h2>
+        <h2 style="margin-top:0">Achievement by Owner — % of individual target over time</h2>
         <canvas id="ownerChart{sfx}"></canvas>
       </div>
       <div class="chart-card">
@@ -1034,6 +1034,11 @@ def build_dashboard():
         pace_lines = [{"label": "Pace to ₹" + format(t / 10000000, ".1f") + "Cr" + (" (" + ", ".join(n) + ")" if len(groups) > 1 else ""),
                        "data": [round(t * (i + 1) / q_len) for i in range(q_len)]}
                       for t, n in sorted(groups.items(), reverse=True)]
+        def pct_of_own_target(o):
+            t = tgt_for(cfg, o)
+            raw = cum_series({o})
+            return [None if v is None else round(v / t * 100, 1) for v in raw]
+
         timeline = {
             "labels": day_labels,
             "todayIndex": today_i,
@@ -1041,6 +1046,12 @@ def build_dashboard():
             "achieved": cum_series(None),
             "owners": [{"name": o, "data": cum_series({o})} for o in IC_NAMES],
             "paceLines": pace_lines,
+            # Normalized view used by the "Achievement by Owner" chart: each owner's progress as a
+            # % of their OWN individual target, plotted against one shared "100% = on pace" line.
+            # Avoids plotting multiple absolute-Rs pace lines when targets differ across owners
+            # (e.g. Utkrist's Rs 1.5Cr vs Rs 1.8Cr for the others), which was hard to read.
+            "ownersPct": [{"name": o, "data": pct_of_own_target(o)} for o in IC_NAMES],
+            "pacePct": [round((i + 1) / q_len * 100, 1) for i in range(q_len)],
         }
         agg = lead_agg_by_q[qk]["QDR"]
         lv = [agg["buckets"].get(l, 0) for l in lead_labels]
@@ -1280,16 +1291,24 @@ def build_dashboard():
       options: lineOpts
     }});
 
+    const pctTick = v => v + '%';
+    const pctTip = ctx => ctx.dataset.label + ': ' + ctx.raw + '%';
+    const ownerLineOpts = {{
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: pctTip }} }} }},
+      scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: pctTick }} }}, x: {{ ticks: {{ autoSkip: true, maxTicksLimit: 12 }} }} }}
+    }};
+
     new Chart(document.getElementById('ownerChart' + sfx), {{
       type: 'line',
       data: {{
         labels: T.labels,
-        datasets: T.owners.map((o, i) => ({{
+        datasets: T.ownersPct.map((o, i) => ({{
           label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: ownerColors[i % ownerColors.length],
           borderWidth: 2.5, pointRadius: todayDot, fill: false, tension: 0, spanGaps: false
-        }})).concat(T.paceLines.map((p, i) => ({{ label: p.label, data: p.data, borderColor: i === 0 ? '#B8BFD4' : '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }})))
+        }})).concat([{{ label: 'Expected pace (100% = on target)', data: T.pacePct, borderColor: '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }}])
       }},
-      options: lineOpts
+      options: ownerLineOpts
     }});
 
     new Chart(document.getElementById('ownerBarChart' + sfx), {{
