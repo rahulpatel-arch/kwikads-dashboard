@@ -1298,14 +1298,19 @@ def build_dashboard():
       plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: pctTip }} }} }},
       scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: pctTick }} }}, x: {{ ticks: {{ autoSkip: true, maxTicksLimit: 12 }} }} }}
     }};
+    const hexToRgba = (hex, a) => {{
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+      return `rgba(${{r}}, ${{g}}, ${{b}}, ${{a}})`;
+    }};
 
     new Chart(document.getElementById('ownerChart' + sfx), {{
       type: 'line',
       data: {{
         labels: T.labels,
         datasets: T.ownersPct.map((o, i) => ({{
-          label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: ownerColors[i % ownerColors.length],
-          borderWidth: 2.5, pointRadius: todayDot, fill: false, tension: 0, spanGaps: false
+          label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: hexToRgba(ownerColors[i % ownerColors.length], 0.18),
+          borderWidth: 2.5, pointRadius: todayDot, fill: 'origin', tension: 0, spanGaps: false
         }})).concat([{{ label: 'Expected pace (100% = on target)', data: T.pacePct, borderColor: '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }}])
       }},
       options: ownerLineOpts
