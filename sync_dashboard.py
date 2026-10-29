@@ -861,7 +861,7 @@ def build_dashboard():
 
     <div class="chart-card">
       <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
-      <canvas id="leadChart{sfx}"></canvas>
+      <canvas id="leadChart{sfx}" height="90"></canvas>
     </div>
 
     <div class="chart-card">
