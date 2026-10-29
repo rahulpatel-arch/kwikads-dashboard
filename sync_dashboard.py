@@ -854,15 +854,14 @@ def build_dashboard():
       <div class="stat-card money"><div class="icon-tag">💰</div><div class="num">{fmt_currency(d['avg_ticket'])}</div><div class="label">Avg Ticket Size ({ql})</div></div>
     </div>
 
-    <div class="chart-row">
-      <div class="chart-card">
-        <h2 style="margin-top:0">Achievement by Owner — % of individual target over time</h2>
-        <canvas id="ownerChart{sfx}"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
-        <canvas id="leadChart{sfx}"></canvas>
-      </div>
+    <div class="chart-card">
+      <h2 style="margin-top:0">Achievement by Owner — % of individual target over time</h2>
+      <div class="mini-chart-grid" id="ownerChartGrid{sfx}"></div>
+    </div>
+
+    <div class="chart-card">
+      <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
+      <canvas id="leadChart{sfx}"></canvas>
     </div>
 
     <div class="chart-card">
@@ -1147,6 +1146,10 @@ def build_dashboard():
   .chart-card::before {{ content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--gold),var(--navy),var(--purple)); }}
   .chart-row {{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }}
   @media (max-width:800px) {{ .chart-row {{ grid-template-columns:1fr; }} }}
+  .mini-chart-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:14px; }}
+  .mini-chart-card {{ background:var(--bg); border-radius:10px; padding:14px 16px; }}
+  .mini-chart-card h4 {{ margin:0 0 8px; font-size:13.5px; font-weight:700; color:var(--navy); }}
+  .mini-chart-card canvas {{ max-height:160px; }}
   .progress-wrap {{ background:#E3E8F5; border-radius:20px; height:28px; overflow:hidden; margin:10px 0; box-shadow:inset 0 1px 3px rgba(30,39,97,0.12); }}
   .progress-fill {{ background:linear-gradient(90deg, var(--gold), #E8B85C); height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; color:white; font-size:11.5px; font-weight:700; transition:width 0.8s ease; }}
   .target-summary {{ display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; }}
@@ -1293,27 +1296,38 @@ def build_dashboard():
 
     const pctTick = v => v + '%';
     const pctTip = ctx => ctx.dataset.label + ': ' + ctx.raw + '%';
-    const ownerLineOpts = {{
-      interaction: {{ mode: 'index', intersect: false }},
-      plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: pctTip }} }} }},
-      scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: pctTick }} }}, x: {{ ticks: {{ autoSkip: true, maxTicksLimit: 12 }} }} }}
-    }};
     const hexToRgba = (hex, a) => {{
       const h = hex.replace('#', '');
       const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
       return `rgba(${{r}}, ${{g}}, ${{b}}, ${{a}})`;
     }};
 
-    new Chart(document.getElementById('ownerChart' + sfx), {{
-      type: 'line',
-      data: {{
-        labels: T.labels,
-        datasets: T.ownersPct.map((o, i) => ({{
-          label: o.name, data: o.data, borderColor: ownerColors[i % ownerColors.length], backgroundColor: hexToRgba(ownerColors[i % ownerColors.length], 0.18),
-          borderWidth: 2.5, pointRadius: todayDot, fill: 'origin', tension: 0, spanGaps: false
-        }})).concat([{{ label: 'Expected pace (100% = on target)', data: T.pacePct, borderColor: '#8891A3', borderDash: [6, 5], borderWidth: 2, pointRadius: 0, fill: false }}])
-      }},
-      options: ownerLineOpts
+    // One small, separate chart per owner (instead of all overlaid on a single chart) —
+    // each shows that owner's own % of target plus the shared expected-pace reference line.
+    const ownerGrid = document.getElementById('ownerChartGrid' + sfx);
+    T.ownersPct.forEach((o, i) => {{
+      const cardId = 'ownerMiniChart' + sfx + '_' + i;
+      const card = document.createElement('div');
+      card.className = 'mini-chart-card';
+      card.innerHTML = '<h4>' + o.name + '</h4><canvas id="' + cardId + '"></canvas>';
+      ownerGrid.appendChild(card);
+      const color = ownerColors[i % ownerColors.length];
+      new Chart(document.getElementById(cardId), {{
+        type: 'line',
+        data: {{
+          labels: T.labels,
+          datasets: [
+            {{ label: o.name, data: o.data, borderColor: color, backgroundColor: hexToRgba(color, 0.18),
+              borderWidth: 2.5, pointRadius: todayDot, fill: 'origin', tension: 0, spanGaps: false }},
+            {{ label: 'Expected pace', data: T.pacePct, borderColor: '#8891A3', borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0, fill: false }}
+          ]
+        }},
+        options: {{
+          interaction: {{ mode: 'index', intersect: false }},
+          plugins: {{ legend: {{ display: false }}, tooltip: {{ callbacks: {{ label: pctTip }} }} }},
+          scales: {{ y: {{ beginAtZero: true, ticks: {{ callback: pctTick, font: {{ size: 10 }} }} }}, x: {{ ticks: {{ autoSkip: true, maxTicksLimit: 6, font: {{ size: 9 }} }} }} }}
+        }}
+      }});
     }});
 
     new Chart(document.getElementById('ownerBarChart' + sfx), {{
