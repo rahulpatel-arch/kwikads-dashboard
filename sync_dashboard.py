@@ -163,7 +163,10 @@ STAGE_WEIGHTS = {
     "Pitch": 0.05,
     "Pre Audit": 0.15,
     "Audit Done": 0.30,
-    "Agreement Signed": 0.70,  # ASSUMPTION: not specified by Rahul — adjust if a different rate applies
+    "Agreement signed": 0.70,  # ASSUMPTION: not specified by Rahul — adjust if a different rate applies
+    # NOTE: Salesforce's actual StageName value is "Agreement signed" (lowercase 's') — this key
+    # must match exactly, since it's used for a case-sensitive Python dict lookup below, not a
+    # SOQL filter (which is case-insensitive and was masking this bug).
 }
 
 
@@ -403,7 +406,7 @@ def build_dashboard():
         SELECT Account.Name, Owner.Name, Kwik_Ads_Expected_ARR__c
         FROM Opportunity
         WHERE RecordType.Name = 'Kwik Ads'
-          AND StageName = 'Agreement Signed'
+          AND StageName = 'Agreement signed'
           AND Owner.Name IN ('{owner_names_sql}')
     """
     agreement_records = query_all(sf, agreement_q)
@@ -426,7 +429,7 @@ def build_dashboard():
         SELECT Owner.Name, StageName, Kwik_Ads_Expected_ARR__c, CreatedDate
         FROM Opportunity
         WHERE RecordType.Name = 'Kwik Ads'
-          AND StageName IN ('Pitch', 'Pre Audit', 'Audit Done', 'Agreement Signed')
+          AND StageName IN ('Pitch', 'Pre Audit', 'Audit Done', 'Agreement signed')
           AND Owner.Name IN ('{owner_names_sql}')
     """
     pipeline_records = query_all(sf, pipeline_q)
@@ -787,7 +790,7 @@ def build_dashboard():
 
     def render_pipeline_stage_table():
         html = "<table><tr><th>Stage</th><th class='center-cell'>Brands</th><th style='text-align:right'>EARR</th><th class='center-cell'>Conv. Weight</th><th style='text-align:right'>Weighted Value</th></tr>\n"
-        for s in ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"]:
+        for s in ["Pitch", "Pre Audit", "Audit Done", "Agreement signed"]:
             d = stage_summary[s]
             html += f"<tr><td>{s}</td><td class='center-cell'>{d['count']}</td><td class='num-cell'>{fmt_currency(d['earr'])}</td><td class='center-cell'>{int(STAGE_WEIGHTS[s]*100)}%</td><td class='num-cell'>{fmt_currency(d['weighted'])}</td></tr>\n"
         html += f"<tr class='total-row'><td colspan='2'>Total ({pipeline_total_count} brands)</td><td class='num-cell'>{fmt_currency(pipeline_total_arr)}</td><td></td><td class='num-cell'>{fmt_currency(weighted_total)}</td></tr>\n"
@@ -800,7 +803,7 @@ def build_dashboard():
             m = owner_stage_matrix[owner]
             weighted = sum(m[s]["earr"] * STAGE_WEIGHTS[s] for s in STAGE_WEIGHTS)
             html += f"<tr><td>{owner}</td>"
-            for s in ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"]:
+            for s in ["Pitch", "Pre Audit", "Audit Done", "Agreement signed"]:
                 html += f"<td class='center-cell'>{m[s]['count']} · {fmt_currency(m[s]['earr'])}</td>"
             html += f"<td class='num-cell'>{fmt_currency(weighted)}</td></tr>\n"
         html += "</table>"
@@ -1066,7 +1069,7 @@ def build_dashboard():
             "leadFunnel": {"labels": lead_labels, "values": lv, "pcts": [round(v / tot * 100, 1) if tot else 0 for v in lv]},
         }
 
-    pipeline_stage_labels = ["Pitch", "Pre Audit", "Audit Done", "Agreement Signed"]
+    pipeline_stage_labels = ["Pitch", "Pre Audit", "Audit Done", "Agreement signed"]
     pipeline_stage_values = [stage_summary[s]["earr"] for s in pipeline_stage_labels]
     pipeline_weighted_values = [stage_summary[s]["weighted"] for s in pipeline_stage_labels]
 
