@@ -863,11 +863,6 @@ def build_dashboard():
     </div>
 
     <div class="chart-card">
-      <h2 style="margin-top:0">MQL Lead Funnel — {ql}</h2>
-      <canvas id="leadChart{sfx}" height="90"></canvas>
-    </div>
-
-    <div class="chart-card">
       <h2 style="margin-top:0">Achievement by Owner — progress to {targets_label(cfg)}</h2>
       <canvas id="ownerBarChart{sfx}" height="90"></canvas>
     </div>
@@ -1370,15 +1365,6 @@ def build_dashboard():
           }});
         }}
       }}]
-    }});
-
-    new Chart(document.getElementById('leadChart' + sfx), {{
-      type: 'doughnut',
-      data: {{ labels: D.leadFunnel.labels, datasets: [{{ data: D.leadFunnel.values, backgroundColor: leadColors, borderWidth:2, borderColor:'#fff' }}] }},
-      options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 10.5 }} }} }}, tooltip: {{ callbacks: {{ label: (ctx) => {{
-        const pct = D.leadFunnel.pcts[ctx.dataIndex];
-        return `${{ctx.label}}: ${{ctx.raw}} (${{pct}}%)`;
-      }} }} }} }} }}
     }});
   }}
   initFocusCharts('OND', CHART_DATA.focus.OND);
