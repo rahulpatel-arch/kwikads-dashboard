@@ -62,10 +62,14 @@ BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
 # back to fully live Salesforce numbers. Update TRACKER_LIVE from the tracker whenever it changes.
 USE_TRACKER_NUMBERS = True
 TRACKER_ASOF = "13 Oct"
-TRACKER_BASELINE = {   # JAS 2026 baseline (team: 524 pitches, 235 audits, 64 Go-Lives)
-    "Gaurav":  {"pitches": 169, "audits": 73},
-    "Trishun": {"pitches": 127, "audits": 61},
-    "Tushar":  {"pitches": 124, "audits": 46},
+TRACKER_BASELINE = {   # JAS 2026 baseline, per-rep (from Rahul's manual funnel tracker, updated 16 Nov).
+    # Full team table (incl. Rahul and Vaishak, who aren't in IC_NAMES so aren't used by this tab):
+    # pitches 255 / access 130 / audits 99 / Go-Lives 18 team-wide; "Base Line JAS" header row on the
+    # tracker (524/289/235/64) is a larger company-wide figure, not this team's own total -- not used here.
+    "Gaurav":  {"pitches": 61, "audits": 19},
+    "Trishun": {"pitches": 53, "audits": 19},
+    "Tushar":  {"pitches": 67, "audits": 29},
+    "Utkrist": {"pitches": 43, "audits": 9},
 }
 TRACKER_LIVE = {       # OND 2026 so far (as of TRACKER_ASOF)
     "Gaurav":  {"pitches": 11, "audits": 6},
