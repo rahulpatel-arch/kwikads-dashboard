@@ -43,12 +43,13 @@ INDIVIDUAL_TARGET = 1_80_00_000  # Rs 1.8 Cr per rep, JAS quarter
 # OND 2026 targets: one target per POC (edit this dict to change). The team target is the
 # sum of the individual targets. OND_INDIVIDUAL_TARGET is only the fallback for anyone not listed.
 OND_INDIVIDUAL_TARGETS = {
-    "Trishun": 1_80_00_000,   # Rs 1.8 Cr
-    "Gaurav":  1_80_00_000,   # Rs 1.8 Cr
-    "Tushar":  1_80_00_000,   # Rs 1.8 Cr
-    "Utkrist": 1_50_00_000,   # Rs 1.5 Cr (inherited from Vaishak's slot; adjust if Utkrist should have a different target)
+    # Revised down from the original 1.8/1.8/1.8/1.5 Cr split, updated 21 Nov 2026.
+    "Trishun": 1_25_00_000,   # Rs 1.25 Cr
+    "Gaurav":  1_25_00_000,   # Rs 1.25 Cr
+    "Tushar":  1_25_00_000,   # Rs 1.25 Cr
+    "Utkrist": 80_00_000,     # Rs 0.80 Cr
 }
-OND_TARGET = sum(OND_INDIVIDUAL_TARGETS.values())   # Rs 6.9 Cr
+OND_TARGET = sum(OND_INDIVIDUAL_TARGETS.values())   # Rs 4.55 Cr
 OND_INDIVIDUAL_TARGET = 1_80_00_000
 
 # --- POC Focus Areas tab: plan assumptions to reach the individual target ---
@@ -62,14 +63,14 @@ BASELINE_QUARTER = "JAS"     # last quarter, used as each rep's baseline
 # back to fully live Salesforce numbers. Update TRACKER_LIVE from the tracker whenever it changes.
 USE_TRACKER_NUMBERS = True
 TRACKER_ASOF = "13 Oct"
-TRACKER_BASELINE = {   # JAS 2026 baseline, per-rep (from Rahul's manual funnel tracker, updated 16 Nov).
+TRACKER_BASELINE = {   # JAS 2026 baseline, per-rep (from Rahul's manual funnel tracker, updated 21 Nov).
     # Full team table (incl. Rahul and Vaishak, who aren't in IC_NAMES so aren't used by this tab):
-    # pitches 255 / access 130 / audits 99 / Go-Lives 18 team-wide; "Base Line JAS" header row on the
+    # pitches 287 / access 147 / audits 116 / Go-Lives 24 team-wide; "Base Line JAS" header row on the
     # tracker (524/289/235/64) is a larger company-wide figure, not this team's own total -- not used here.
-    "Gaurav":  {"pitches": 61, "audits": 19},
-    "Trishun": {"pitches": 53, "audits": 19},
-    "Tushar":  {"pitches": 67, "audits": 29},
-    "Utkrist": {"pitches": 43, "audits": 9},
+    "Gaurav":  {"pitches": 70, "audits": 22},
+    "Trishun": {"pitches": 62, "audits": 24},
+    "Tushar":  {"pitches": 73, "audits": 33},
+    "Utkrist": {"pitches": 50, "audits": 12},
 }
 TRACKER_LIVE = {       # OND 2026 so far (as of TRACKER_ASOF)
     "Gaurav":  {"pitches": 11, "audits": 6},
@@ -1050,7 +1051,7 @@ def build_dashboard():
             # Normalized view used by the "Achievement by Owner" chart: each owner's progress as a
             # % of their OWN individual target, plotted against one shared "100% = on pace" line.
             # Avoids plotting multiple absolute-Rs pace lines when targets differ across owners
-            # (e.g. Utkrist's Rs 1.5Cr vs Rs 1.8Cr for the others), which was hard to read.
+            # (e.g. Utkrist's Rs 0.80Cr vs Rs 1.25Cr for the others), which was hard to read.
             "ownersPct": [{"name": o, "data": pct_of_own_target(o)} for o in IC_NAMES],
             "pacePct": [round((i + 1) / q_len * 100, 1) for i in range(q_len)],
         }
